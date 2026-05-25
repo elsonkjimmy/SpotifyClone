@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "394646013784",
+    "project_id": "garderobe-a6fbf",
+    "storage_bucket": "garderobe-a6fbf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:394646013784:android:dac1a0f2da20fb9029472d",
+        "android_client_info": {
+          "package_name": "com.garderobe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkjnsmE5cRCmhzJWr-eFx7i5M7-faKPuM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:394646013784:android:f764f33fde99f17429472d",
+        "android_client_info": {
+          "package_name": "com.spotifyclone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkjnsmE5cRCmhzJWr-eFx7i5M7-faKPuM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
