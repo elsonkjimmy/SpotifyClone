@@ -29,7 +29,7 @@ buildscript {
 project.ext.set('react-native', [
     versions: [
         firebase: [
-            bom: "32.8.1",
+            bom: "31.5.0",
         ],
         play: [
             "play-services-auth": "20.7.0",
@@ -59,10 +59,22 @@ allprojects {
 
 // Force newer androidx.activity version for PickVisualMedia support
 subprojects {
+    afterEvaluate { subproject ->
+        if (subproject.hasProperty("android")) {
+            subproject.android.compileSdkVersion rootProject.ext.compileSdkVersion
+        }
+    }
+
     configurations.all {
         resolutionStrategy {
             force 'androidx.activity:activity:1.8.0'
             force 'androidx.activity:activity-ktx:1.8.0'
+        }
+    }
+
+    if (project.name == "react-native-firebase_firestore") {
+        afterEvaluate {
+            dependencies.add("implementation", "com.google.guava:guava:31.1-android")
         }
     }
 }
