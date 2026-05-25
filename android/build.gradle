@@ -3,12 +3,17 @@
 buildscript {
     ext {
         buildToolsVersion = "33.0.0"
-        minSdkVersion = 21
-        compileSdkVersion = 33
+        minSdkVersion = 23
+        compileSdkVersion = 34
         targetSdkVersion = 33
 
-        // We use NDK 23 which has both M1 support and is the side-by-side NDK version from AGP.
-        ndkVersion = "23.1.7779620"
+        // Use the installed side-by-side NDK version available in this environment.
+        ndkVersion = "25.1.8937393"
+        
+        // Java source/target compatibility for Firebase Auth pattern matching (Java 16+)
+        sourceCompatibilityVersion = JavaVersion.VERSION_16
+        targetCompatibilityVersion = JavaVersion.VERSION_16
+        kotlinVersion = "1.8.0"
     }
     repositories {
         google()
@@ -18,5 +23,46 @@ buildscript {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("com.google.gms:google-services:4.3.15")
+    }
+}
+
+project.ext.set('react-native', [
+    versions: [
+        firebase: [
+            bom: "32.8.1",
+        ],
+        play: [
+            "play-services-auth": "20.7.0",
+        ],
+    ],
+])
+
+allprojects {
+    gradle.projectsEvaluated {
+        allprojects {
+            tasks.withType(JavaCompile) {
+                sourceCompatibility = rootProject.ext.sourceCompatibilityVersion
+                targetCompatibility = rootProject.ext.targetCompatibilityVersion
+            }
+            tasks.configureEach {
+                if (it.hasProperty("kotlinOptions")) {
+                    it.kotlinOptions.jvmTarget = "16"
+                }
+            }
+        }
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Force newer androidx.activity version for PickVisualMedia support
+subprojects {
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.activity:activity:1.8.0'
+            force 'androidx.activity:activity-ktx:1.8.0'
+        }
     }
 }
