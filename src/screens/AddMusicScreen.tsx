@@ -2,7 +2,7 @@
  * Écran de téléversement (Upload).
  * Réservé à l'administrateur pour ajouter des musiques sur la plateforme.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,12 +16,23 @@ import {
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { Music, Image as ImageIcon, CheckCircle } from 'lucide-react-native';
+import { Music, Image as ImageIcon, LogIn } from 'lucide-react-native';
+import auth from '@react-native-firebase/auth';
 import { COLORS, SPACING } from '../theme/colors';
+import SpotifyLogo from '../components/SpotifyLogo';
+import { surveillerChangementEtatAuthentification } from '../services/auth';
 import { televerserVersCloudinary } from '../services/ServiceTeleversement';
 import { enregistrerNouvelleMusiqueDansFirestore } from '../services/firestore';
 
 const EcranAjouterMusique = ({ navigation }: any) => {
+  const [utilisateurActuel, setUtilisateurActuel] = useState<any>(auth().currentUser);
+
+  useEffect(() => {
+    const desabonner = surveillerChangementEtatAuthentification((utilisateur) => {
+      setUtilisateurActuel(utilisateur);
+    });
+    return desabonner;
+  }, []);
   const [titreSaisi, setTitreSaisi] = useState('');
   const [artisteSaisi, setArtisteSaisi] = useState('');
   const [fichierAudio, setFichierAudio] = useState<any>(null);
@@ -77,9 +88,31 @@ const EcranAjouterMusique = ({ navigation }: any) => {
     }
   };
 
+  if (!utilisateurActuel) {
+    return (
+      <SafeAreaView style={styles.conteneurPrincipal}>
+        <View style={styles.zoneProtegee}>
+          <SpotifyLogo size={72} />
+          <Text style={styles.titreVerrouille}>Connexion requise</Text>
+          <Text style={styles.texteVerrouille}>
+            L&apos;ajout de musique est reserve aux utilisateurs connectes.
+          </Text>
+
+          <TouchableOpacity style={styles.boutonPublier} onPress={() => navigation.navigate('Login')}>
+            <View style={styles.contenuBoutonConnexion}>
+              <LogIn color={COLORS.black} size={18} />
+              <Text style={styles.texteBoutonConnexionProtege}>SE CONNECTER</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.conteneurPrincipal}>
       <ScrollView contentContainerStyle={styles.conteneurFormulaire}>
+        <SpotifyLogo size={42} showWordmark />
         <Text style={styles.titrePage}>Ajouter une musique</Text>
 
         <Text style={styles.label}>Titre de la chanson</Text>
@@ -140,11 +173,32 @@ const styles = StyleSheet.create({
   conteneurFormulaire: {
     padding: SPACING.l,
   },
+  zoneProtegee: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.l,
+  },
   titrePage: {
     fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.white,
     marginBottom: 30,
+    marginTop: SPACING.m,
+  },
+  titreVerrouille: {
+    color: COLORS.white,
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginTop: SPACING.l,
+  },
+  texteVerrouille: {
+    color: COLORS.lightGray,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginTop: SPACING.s,
+    marginBottom: SPACING.l,
   },
   label: {
     color: COLORS.white,
@@ -186,6 +240,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 1,
+  },
+  contenuBoutonConnexion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  texteBoutonConnexionProtege: {
+    color: COLORS.black,
+    fontWeight: 'bold',
+    fontSize: 16,
+    letterSpacing: 1,
+    marginLeft: SPACING.s,
   },
 });
 

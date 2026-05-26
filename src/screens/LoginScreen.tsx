@@ -15,6 +15,7 @@ import {
   Alert,
 } from 'react-native';
 import { COLORS, SPACING } from '../theme/colors';
+import SpotifyLogo from '../components/SpotifyLogo';
 import { connecterUtilisateurAvecEmail } from '../services/auth';
 
 const EcranDeConnexion = ({ navigation }: any) => {
@@ -34,6 +35,7 @@ const EcranDeConnexion = ({ navigation }: any) => {
     try {
       // Appel au service Firebase pour vérifier les identifiants
       await connecterUtilisateurAvecEmail(adresseEmail, motDePasse);
+      navigation.navigate('Main');
     } catch (erreur: any) {
       Alert.alert('Erreur de connexion', erreur.message);
     } finally {
@@ -48,10 +50,9 @@ const EcranDeConnexion = ({ navigation }: any) => {
         style={styles.conteneurInterne}
       >
         <View style={styles.sectionLogo}>
-          <View style={styles.rondLogoVert}>
-            <Text style={styles.iconeMusique}>🎵</Text>
-          </View>
+          <SpotifyLogo size={86} />
           <Text style={styles.texteSpotify}>Spotify</Text>
+          <Text style={styles.texteIntro}>Connectez-vous seulement pour vos actions personnelles.</Text>
         </View>
 
         <View style={styles.sectionFormulaire}>
@@ -94,6 +95,13 @@ const EcranDeConnexion = ({ navigation }: any) => {
               Pas de compte ? <Text style={styles.texteSInscrire}>S'inscrire</Text>
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.lienContinuer}
+            onPress={() => navigation.navigate('Main')}
+          >
+            <Text style={styles.texteContinuer}>Continuer sans compte</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -114,22 +122,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 50,
   },
-  rondLogoVert: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.green,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  iconeMusique: {
-    fontSize: 40,
-  },
   texteSpotify: {
     fontSize: 32,
     fontWeight: 'bold',
     color: COLORS.white,
+    marginTop: SPACING.s,
+  },
+  texteIntro: {
+    color: COLORS.lightGray,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: SPACING.s,
+    textAlign: 'center',
   },
   sectionFormulaire: {
     width: '100%',
@@ -171,6 +175,15 @@ const styles = StyleSheet.create({
   texteSInscrire: {
     color: COLORS.green,
     fontWeight: 'bold',
+  },
+  lienContinuer: {
+    marginTop: SPACING.l,
+    alignItems: 'center',
+  },
+  texteContinuer: {
+    color: COLORS.lightGray,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

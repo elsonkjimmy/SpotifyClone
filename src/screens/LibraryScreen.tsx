@@ -2,7 +2,7 @@
  * Écran Ma Bibliothèque (Library).
  * Permet à l'utilisateur de voir ses playlists et ses musiques favorites.
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { Heart, Plus, Music, LogOut } from 'lucide-react-native';
 import { COLORS, SPACING } from '../theme/colors';
-import { deconnecterUtilisateur } from '../services/auth';
+import { deconnecterUtilisateur, surveillerChangementEtatAuthentification } from '../services/auth';
+import SpotifyLogo from '../components/SpotifyLogo';
 import auth from '@react-native-firebase/auth';
 
 // Données fictives pour simuler le contenu de la bibliothèque
@@ -26,11 +27,16 @@ const MES_PLAYLISTS_EXEMPLE = [
 ];
 
 const EcranMaBibliotheque = ({ navigation }: any) => {
-  const utilisateurActuel = auth().currentUser;
-  
-  // On définit ici l'email de l'administrateur (celui qui a le droit d'ajouter)
-  const EMAIL_ADMIN = 'admin@ict.com';
-  const estAdministrateur = utilisateurActuel?.email === EMAIL_ADMIN;
+  const [utilisateurActuel, setUtilisateurActuel] = useState<any>(auth().currentUser);
+
+  useEffect(() => {
+    const desabonner = surveillerChangementEtatAuthentification((utilisateur) => {
+      setUtilisateurActuel(utilisateur);
+    });
+    return desabonner;
+  }, []);
+
+  const estConnecte = Boolean(utilisateurActuel);
 
   // Composant interne pour afficher chaque ligne de playlist
   const RenduLignePlaylist = ({ item }: any) => (
@@ -57,12 +63,10 @@ const EcranMaBibliotheque = ({ navigation }: any) => {
       {/* En-tête de la bibliothèque */}
       <View style={styles.entete}>
         <View style={styles.ligneUtilisateur}>
-          <View style={styles.avatarCercle}>
-            <Text style={styles.texteAvatar}>U</Text>
-          </View>
+          <SpotifyLogo size={35} />
           <Text style={styles.titrePage}>Ta bibliothèque</Text>
           <View style={styles.iconesAction}>
-            {estAdministrateur && (
+            {estConnecte && (
               <TouchableOpacity 
                 style={styles.boutonAction} 
                 onPress={() => navigation.navigate('AddMusic')}
@@ -70,14 +74,39 @@ const EcranMaBibliotheque = ({ navigation }: any) => {
                 <Plus color={COLORS.white} size={28} />
               </TouchableOpacity>
             )}
-            <TouchableOpacity 
-              style={styles.boutonAction} 
-              onPress={() => deconnecterUtilisateur()}
-            >
-              <LogOut color={COLORS.lightGray} size={24} />
-            </TouchableOpacity>
+            {estConnecte && (
+              <TouchableOpacity 
+                style={styles.boutonAction} 
+                onPress={() => deconnecterUtilisateur()}
+              >
+                <LogOut color={COLORS.lightGray} size={24} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
+
+        {!estConnecte && (
+          <View style={styles.encartConnexion}>
+            <Text style={styles.titreConnexion}>Connectez-vous pour créer votre bibliothèque</Text>
+            <Text style={styles.texteConnexion}>
+              Vous pouvez écouter et rechercher sans compte. La connexion est demandée pour ajouter des musiques et personnaliser votre espace.
+            </Text>
+            <View style={styles.actionsConnexion}>
+              <TouchableOpacity
+                style={styles.boutonConnexion}
+                onPress={() => navigation.navigate('Login')}
+              >
+                <Text style={styles.texteBoutonConnexion}>Se connecter</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.boutonInscription}
+                onPress={() => navigation.navigate('Register')}
+              >
+                <Text style={styles.texteBoutonInscription}>Créer un compte</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Filtres (Boutons "Playlists", "Artistes", etc.) */}
         <View style={styles.conteneurFiltres}>
@@ -95,10 +124,16 @@ const EcranMaBibliotheque = ({ navigation }: any) => {
 
       {/* Liste des playlists */}
       <FlatList
-        data={MES_PLAYLISTS_EXEMPLE}
+        data={estConnecte ? MES_PLAYLISTS_EXEMPLE : []}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <RenduLignePlaylist item={item} />}
         contentContainerStyle={styles.listePlaylists}
+        ListEmptyComponent={
+          <View style={styles.bibliothequeVide}>
+            <Music color={COLORS.lightGray} size={40} />
+            <Text style={styles.texteBibliothequeVide}>Votre bibliothèque apparaitra ici après connexion.</Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -117,31 +152,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.l,
   },
-  avatarCercle: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: '#F57C00',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.m,
-  },
-  texteAvatar: {
-    color: COLORS.black,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
   titrePage: {
     fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.white,
     flex: 1,
+    marginLeft: SPACING.m,
   },
   iconesAction: {
     flexDirection: 'row',
   },
   boutonAction: {
     marginLeft: SPACING.m,
+  },
+  encartConnexion: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 10,
+    padding: SPACING.m,
+    marginBottom: SPACING.l,
+  },
+  titreConnexion: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: SPACING.s,
+  },
+  texteConnexion: {
+    color: COLORS.lightGray,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  actionsConnexion: {
+    flexDirection: 'row',
+    marginTop: SPACING.m,
+  },
+  boutonConnexion: {
+    backgroundColor: COLORS.green,
+    borderRadius: 24,
+    paddingHorizontal: SPACING.m,
+    paddingVertical: SPACING.s,
+    marginRight: SPACING.s,
+  },
+  boutonInscription: {
+    borderColor: COLORS.lightGray,
+    borderWidth: 1,
+    borderRadius: 24,
+    paddingHorizontal: SPACING.m,
+    paddingVertical: SPACING.s,
+  },
+  texteBoutonConnexion: {
+    color: COLORS.black,
+    fontWeight: 'bold',
+  },
+  texteBoutonInscription: {
+    color: COLORS.white,
+    fontWeight: 'bold',
   },
   conteneurFiltres: {
     flexDirection: 'row',
@@ -173,6 +238,17 @@ const styles = StyleSheet.create({
   listePlaylists: {
     paddingHorizontal: SPACING.m,
     paddingBottom: 100,
+  },
+  bibliothequeVide: {
+    alignItems: 'center',
+    paddingTop: 70,
+    paddingHorizontal: SPACING.l,
+  },
+  texteBibliothequeVide: {
+    color: COLORS.lightGray,
+    fontSize: 15,
+    marginTop: SPACING.m,
+    textAlign: 'center',
   },
   conteneurLigne: {
     flexDirection: 'row',

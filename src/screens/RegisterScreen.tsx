@@ -15,6 +15,7 @@ import {
   Alert,
 } from 'react-native';
 import { COLORS, SPACING } from '../theme/colors';
+import SpotifyLogo from '../components/SpotifyLogo';
 import { creerCompteUtilisateurAvecEmail } from '../services/auth';
 
 const EcranDInscription = ({ navigation }: any) => {
@@ -40,8 +41,8 @@ const EcranDInscription = ({ navigation }: any) => {
     try {
       // Appel au service pour créer le compte
       await creerCompteUtilisateurAvecEmail(emailSaisi, motDePasseSaisi);
-      Alert.alert('Succès', 'Votre compte a été créé ! Connectez-vous maintenant.');
-      navigation.navigate('Login');
+      Alert.alert('Succès', 'Votre compte a été créé.');
+      navigation.navigate('Main');
     } catch (erreur: any) {
       Alert.alert("Échec de l'inscription", erreur.message);
     } finally {
@@ -59,6 +60,7 @@ const EcranDInscription = ({ navigation }: any) => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.boutonRetour}>
             <Text style={styles.flecheRetour}>←</Text>
           </TouchableOpacity>
+          <SpotifyLogo size={34} />
           <Text style={styles.titrePage}>Créer un compte</Text>
         </View>
 
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.white,
-    marginLeft: 10,
+    marginLeft: SPACING.s,
   },
   formulaire: {
     flex: 1,

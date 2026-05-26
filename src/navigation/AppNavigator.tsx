@@ -15,6 +15,7 @@ import EcranDInscription from '../screens/RegisterScreen';
 import EcranLecteurPleinEcran from '../screens/PlayerScreen';
 import EcranAjouterMusique from '../screens/AddMusicScreen';
 import MiniLecteurAudio from '../components/MiniLecteurAudio';
+import SplashScreen from '../components/SplashScreen';
 import { COLORS } from '../theme/colors';
 import { surveillerChangementEtatAuthentification } from '../services/auth';
 
@@ -84,33 +85,32 @@ const AppNavigator = () => {
     return desabonner;
   }, []);
 
-  // Si Firebase n'a pas encore répondu, on n'affiche rien (écran blanc temporaire)
-  if (estEnTrainDInitialiser) return null;
+  // Si Firebase n'a pas encore répondu, on affiche un vrai splash au lieu d'un écran blanc.
+  if (estEnTrainDInitialiser) return <SplashScreen />;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {utilisateurConnecte ? (
-        // Si l'utilisateur est connecté, on montre les onglets principaux
-        <>
-          <Stack.Screen name="Main" component={NavigateurParOnglets} />
-          <Stack.Screen 
-            name="Player" 
-            component={EcranLecteurPleinEcran} 
-            options={{ presentation: 'modal' }} 
-          />
-          <Stack.Screen 
-            name="AddMusic" 
-            component={EcranAjouterMusique} 
-            options={{ presentation: 'modal' }} 
-          />
-        </>
-      ) : (
-        // Sinon, on montre les écrans de connexion/inscription
-        <>
-          <Stack.Screen name="Login" component={EcranDeConnexion} />
-          <Stack.Screen name="Register" component={EcranDInscription} />
-        </>
-      )}
+      <Stack.Screen name="Main" component={NavigateurParOnglets} />
+      <Stack.Screen 
+        name="Player" 
+        component={EcranLecteurPleinEcran} 
+        options={{ presentation: 'modal' }} 
+      />
+      <Stack.Screen 
+        name="AddMusic" 
+        component={EcranAjouterMusique} 
+        options={{ presentation: 'modal' }} 
+      />
+      <Stack.Screen 
+        name="Login" 
+        component={EcranDeConnexion} 
+        options={{ presentation: 'modal' }} 
+      />
+      <Stack.Screen 
+        name="Register" 
+        component={EcranDInscription} 
+        options={{ presentation: 'modal' }} 
+      />
     </Stack.Navigator>
   );
 };
