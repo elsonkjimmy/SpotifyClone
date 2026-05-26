@@ -10,26 +10,26 @@ buildscript {
         // Use the installed side-by-side NDK version available in this environment.
         ndkVersion = "25.1.8937393"
         
-        // Java source/target compatibility for Firebase Auth pattern matching (Java 16+)
-        sourceCompatibilityVersion = JavaVersion.VERSION_16
-        targetCompatibilityVersion = JavaVersion.VERSION_16
-        kotlinVersion = "1.8.0"
+        // Java source/target compatibility for current Android/Firebase toolchains.
+        sourceCompatibilityVersion = JavaVersion.VERSION_17
+        targetCompatibilityVersion = JavaVersion.VERSION_17
+        kotlinVersion = "1.8.22"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.1.2")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("com.google.gms:google-services:4.3.15")
+        classpath("com.google.gms:google-services:4.4.0")
     }
 }
 
 project.ext.set('react-native', [
     versions: [
         firebase: [
-            bom: "31.5.0",
+            bom: "32.7.1",
         ],
         play: [
             "play-services-auth": "20.7.0",
@@ -46,7 +46,7 @@ allprojects {
             }
             tasks.configureEach {
                 if (it.hasProperty("kotlinOptions")) {
-                    it.kotlinOptions.jvmTarget = "16"
+                    it.kotlinOptions.jvmTarget = "17"
                 }
             }
         }
@@ -59,9 +59,28 @@ allprojects {
 
 // Force newer androidx.activity version for PickVisualMedia support
 subprojects {
+    if (project.name == "react-native-linear-gradient") {
+        plugins.withId("com.android.library") {
+            extensions.configure("android") { androidExtension ->
+                androidExtension.namespace = "com.BV.LinearGradient"
+            }
+        }
+    }
+
+    plugins.withId("com.android.library") {
+        if (!android.namespace) {
+            def manifestFile = file("src/main/AndroidManifest.xml")
+            if (manifestFile.exists()) {
+                def manifest = new XmlSlurper(false, false).parse(manifestFile)
+                android.namespace = manifest.@package.text()
+            }
+        }
+    }
+
     afterEvaluate { subproject ->
         if (subproject.hasProperty("android")) {
             subproject.android.compileSdkVersion rootProject.ext.compileSdkVersion
+            subproject.android.buildFeatures.buildConfig true
         }
     }
 
