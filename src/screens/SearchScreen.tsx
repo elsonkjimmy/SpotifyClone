@@ -11,13 +11,25 @@ import {
   SafeAreaView,
   FlatList,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { Search } from 'lucide-react-native';
 import { COLORS, SPACING } from '../theme/colors';
 import ComposantCarteMusique from '../components/ComposantCarteMusique';
-import SpotifyLogo from '../components/SpotifyLogo';
 import { chargerEtJouerUneListeDeMusiques } from '../services/ServiceLecteurAudio';
 import { recupererToutesLesChansons } from '../services/firestore';
+
+// Grille de catégories colorées (typique de Spotify)
+const CATEGORIES_RECHERCHE = [
+  { id: '1', nom: 'Podcasts', couleur: '#E13300' },
+  { id: '2', nom: 'Créé pour vous', couleur: '#1E3264' },
+  { id: '3', nom: 'Nouveautés', couleur: '#E8115B' },
+  { id: '4', nom: 'Pop', couleur: '#148A08' },
+  { id: '5', nom: 'Hip-hop', couleur: '#BC462B' },
+  { id: '6', nom: 'Danse/Électro', couleur: '#D84000' },
+  { id: '7', nom: 'Afro', couleur: '#E1118C' },
+  { id: '8', nom: 'Ambiance', couleur: '#503750' },
+];
 
 const EcranRecherche = () => {
   const [texteRecherche, setTexteRecherche] = useState('');
@@ -29,49 +41,20 @@ const EcranRecherche = () => {
   useEffect(() => {
     const chargerMusiques = async () => {
       try {
-        const chargerDonnees = async () => {
-          const resultat = await recupererToutesLesChansons();
-          return resultat.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-        };
-
-        // Si Firestore ne répond pas sous 4 secondes, on bascule sur les données locales
-        const musiques = await Promise.race([
-          chargerDonnees(),
-          new Promise<any[]>((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout de connexion Firestore')), 4000)
-          )
-        ]);
-
+        const resultat = await recupererToutesLesChansons();
+        const musiques = resultat.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         setToutesLesMusiques(musiques);
         setResultatsFiltres(musiques);
       } catch (erreur) {
         console.log('Erreur recherche:', erreur);
-        // Données de secours en cas d'erreur de connexion à Firestore
+        // Fallback local en cas d'erreur Firestore
         const musiquesDeSecours = [
-          { 
-            id: 'secours-1',
-            title: 'Blinding Lights', 
-            artist: 'The Weeknd', 
-            artwork: 'https://picsum.photos/id/111/300/300',
-            url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-          },
-          { 
-            id: 'secours-2',
-            title: 'Starboy', 
-            artist: 'The Weeknd', 
-            artwork: 'https://picsum.photos/id/122/300/300',
-            url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
-          },
-          { 
-            id: 'secours-3',
-            title: 'One Dance', 
-            artist: 'Drake', 
-            artwork: 'https://picsum.photos/id/133/300/300',
-            url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
-          }
+          { id: 's1', title: 'Blinding Lights', artist: 'The Weeknd', artwork: 'https://i.scdn.co/image/ab67616d0000b273b3c3c7e3f8476a66a152331a' },
+          { id: 's2', title: 'Starboy', artist: 'The Weeknd', artwork: 'https://i.scdn.co/image/ab67616d0000b2734718e5b124f7979288e1467a' },
+          { id: 's3', title: 'One Dance', artist: 'Drake', artwork: 'https://i.scdn.co/image/ab67616d0000b2739418edfa6d914569485b00c5' }
         ];
         setToutesLesMusiques(musiquesDeSecours);
         setResultatsFiltres(musiquesDeSecours);
@@ -100,9 +83,12 @@ const EcranRecherche = () => {
     setResultatsFiltres(musiquesTrouvees);
   };
 
-  const gererLectureMusique = async (musiqueSelectionnee: any) => {
-    await chargerEtJouerUneListeDeMusiques([musiqueSelectionnee]);
-  };
+  // Composant pour chaque carré de catégorie
+  const RenduCarteCategorie = ({ item }: any) => (
+    <TouchableOpacity style={[styles.carteCategorie, { backgroundColor: item.couleur }]}>
+      <Text style={styles.texteCategorie}>{item.nom}</Text>
+    </TouchableOpacity>
+  );
 
   if (estEnTrainDeCharger) {
     return (
@@ -115,14 +101,11 @@ const EcranRecherche = () => {
   return (
     <SafeAreaView style={styles.conteneurPrincipal}>
       <View style={styles.entete}>
-        <View style={styles.ligneTitre}>
-          <SpotifyLogo size={34} />
-          <Text style={styles.titrePage}>Recherche</Text>
-        </View>
+        <Text style={styles.titrePage}>Recherche</Text>
         
         {/* Barre de recherche stylisée Spotify */}
         <View style={styles.conteneurBarreSaisie}>
-          <Search color={COLORS.black} size={20} style={styles.iconeLoupe} />
+          <Search color={COLORS.black} size={22} style={styles.iconeLoupe} />
           <TextInput
             style={styles.champSaisie}
             placeholder="Que souhaitez-vous écouter ?"
@@ -133,25 +116,39 @@ const EcranRecherche = () => {
         </View>
       </View>
 
-      {/* Liste des résultats */}
-      <FlatList
-        data={resultatsFiltres}
-        keyExtractor={(item) => item.id}
-        numColumns={2} // Affichage en grille (2 colonnes)
-        contentContainerStyle={styles.listeResultats}
-        columnWrapperStyle={styles.ligneGrille}
-        renderItem={({ item }) => (
-          <ComposantCarteMusique
-            titre={item.title}
-            artiste={item.artist}
-            urlImage={item.artwork}
-            actionAuClic={() => gererLectureMusique(item)}
+      {/* Si l'utilisateur n'a rien tapé, on montre les catégories */}
+      {texteRecherche.trim() === '' ? (
+        <View style={{ flex: 1 }}>
+          <Text style={styles.sousTitreSection}>Parcourir tout</Text>
+          <FlatList
+            data={CATEGORIES_RECHERCHE}
+            numColumns={2}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <RenduCarteCategorie item={item} />}
+            contentContainerStyle={styles.grilleCategories}
           />
-        )}
-        ListEmptyComponent={
-          <Text style={styles.texteAucunResultat}>Aucune musique trouvée pour "{texteRecherche}"</Text>
-        }
-      />
+        </View>
+      ) : (
+        /* Sinon on montre les résultats de recherche */
+        <FlatList
+          data={resultatsFiltres}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.listeResultats}
+          columnWrapperStyle={styles.ligneGrille}
+          renderItem={({ item }) => (
+            <ComposantCarteMusique
+              titre={item.title}
+              artiste={item.artist}
+              urlImage={item.artwork}
+              actionAuClic={() => chargerEtJouerUneListeDeMusiques([item])}
+            />
+          )}
+          ListEmptyComponent={
+            <Text style={styles.texteAucunResultat}>Aucune musique trouvée pour "{texteRecherche}"</Text>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -169,14 +166,9 @@ const styles = StyleSheet.create({
     padding: SPACING.m,
   },
   titrePage: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.white,
-    marginLeft: SPACING.s,
-  },
-  ligneTitre: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: SPACING.m,
   },
   conteneurBarreSaisie: {
@@ -185,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 5,
     paddingHorizontal: SPACING.s,
-    height: 45,
+    height: 48,
   },
   iconeLoupe: {
     marginRight: SPACING.s,
@@ -193,12 +185,35 @@ const styles = StyleSheet.create({
   champSaisie: {
     flex: 1,
     color: COLORS.black,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  sousTitreSection: {
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    marginLeft: SPACING.m,
+    marginTop: SPACING.s,
+    marginBottom: SPACING.m,
+  },
+  grilleCategories: {
+    paddingHorizontal: SPACING.m - 8,
+  },
+  carteCategorie: {
+    flex: 1,
+    height: 100,
+    borderRadius: 5,
+    margin: 8,
+    padding: SPACING.m,
+  },
+  texteCategorie: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   listeResultats: {
     paddingHorizontal: SPACING.m,
-    paddingBottom: 100, // Pour ne pas être caché par le mini lecteur
+    paddingBottom: 100,
   },
   ligneGrille: {
     justifyContent: 'space-between',

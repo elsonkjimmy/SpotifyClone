@@ -1,8 +1,8 @@
 /**
  * Écran Ma Bibliothèque (Library).
- * Permet à l'utilisateur de voir ses playlists et ses musiques favorites.
+ * Affiche les playlists et les favoris de l'utilisateur avec un design Premium.
  */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -11,38 +11,36 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  ScrollView,
 } from 'react-native';
-import { Heart, Plus, Music, LogOut } from 'lucide-react-native';
+import { Heart, Plus, LogOut, Search, ArrowUpDown } from 'lucide-react-native';
 import { COLORS, SPACING } from '../theme/colors';
-import { deconnecterUtilisateur, surveillerChangementEtatAuthentification } from '../services/auth';
-import SpotifyLogo from '../components/SpotifyLogo';
+import { deconnecterUtilisateur } from '../services/auth';
 import auth from '@react-native-firebase/auth';
 
-// Données fictives pour simuler le contenu de la bibliothèque
+// Données fictives améliorées pour la bibliothèque
 const MES_PLAYLISTS_EXEMPLE = [
-  { id: '1', nom: 'Titres likés', createur: 'Playlist • 125 titres', icone: 'heart', estSpeciale: true },
-  { id: '2', nom: 'Afrobeat 2026', createur: 'Par Moi', image: 'https://i.scdn.co/image/ab67616d0000b273b3c3c7e3f8476a66a152331a' },
-  { id: '3', nom: 'Concentration TP', createur: 'Par Moi', image: 'https://i.scdn.co/image/ab67616d0000b2734718e5b124f7979288e1467a' },
-  { id: '4', nom: 'Sport Matin', createur: 'Par Moi', image: 'https://i.scdn.co/image/ab67616d0000b2739418edfa6d914569485b00c5' },
+  { id: '1', nom: 'Titres likés', createur: 'Playlist • 125 titres', estSpeciale: true },
+  { id: '2', nom: 'Afrobeat 2026', createur: 'Playlist • Moi', image: 'https://i.scdn.co/image/ab67616d0000b273b3c3c7e3f8476a66a152331a' },
+  { id: '3', nom: 'Concentration TP', createur: 'Playlist • Spotify', image: 'https://i.scdn.co/image/ab67616d0000b2734718e5b124f7979288e1467a' },
+  { id: '4', nom: 'Sport Matin', createur: 'Album • Burna Boy', image: 'https://i.scdn.co/image/ab67616d0000b2739418edfa6d914569485b00c5' },
+  { id: '5', nom: 'Mix Années 80', createur: 'Playlist • Spotify', image: 'https://i.scdn.co/image/ab67616d0000b273ba5db46f4b0057b9e4450af5' },
 ];
 
 const EcranMaBibliotheque = ({ navigation }: any) => {
-  const [utilisateurActuel, setUtilisateurActuel] = useState<any>(auth().currentUser);
+  const utilisateurActuel = auth().currentUser;
+  
+  // Logique Admin pour le TP
+  const EMAIL_ADMIN = 'admin@ict.com';
+  const estAdministrateur = utilisateurActuel?.email === EMAIL_ADMIN;
 
-  useEffect(() => {
-    const desabonner = surveillerChangementEtatAuthentification((utilisateur) => {
-      setUtilisateurActuel(utilisateur);
-    });
-    return desabonner;
-  }, []);
-
-  const estConnecte = Boolean(utilisateurActuel);
-
-  // Composant interne pour afficher chaque ligne de playlist
   const RenduLignePlaylist = ({ item }: any) => (
-    <TouchableOpacity style={styles.conteneurLigne}>
+    <TouchableOpacity 
+      style={styles.conteneurLigne}
+      onPress={() => navigation.navigate('PlaylistDetail', { playlist: item })}
+    >
       {item.estSpeciale ? (
-        <View style={styles.carreIconeLike}>
+        <View style={styles.carreVioletLike}>
           <Heart color={COLORS.white} size={24} fill={COLORS.white} />
         </View>
       ) : (
@@ -50,7 +48,7 @@ const EcranMaBibliotheque = ({ navigation }: any) => {
       )}
       
       <View style={styles.sectionTexte}>
-        <Text style={[styles.nomPlaylist, item.estSpeciale && { color: COLORS.green }]}>
+        <Text style={[styles.nomPlaylist, item.estSpeciale && { color: COLORS.green }]} numberOfLines={1}>
           {item.nom}
         </Text>
         <Text style={styles.infoCreateur}>{item.createur}</Text>
@@ -60,80 +58,58 @@ const EcranMaBibliotheque = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.conteneurPrincipal}>
-      {/* En-tête de la bibliothèque */}
+      {/* En-tête : Avatar, Titre et Actions */}
       <View style={styles.entete}>
         <View style={styles.ligneUtilisateur}>
-          <SpotifyLogo size={35} />
+          <View style={styles.avatarCercle}>
+            <Text style={styles.texteAvatar}>U</Text>
+          </View>
           <Text style={styles.titrePage}>Ta bibliothèque</Text>
+          
           <View style={styles.iconesAction}>
-            {estConnecte && (
+            <TouchableOpacity style={styles.boutonIcone}>
+              <Search color={COLORS.white} size={26} />
+            </TouchableOpacity>
+            {estAdministrateur && (
               <TouchableOpacity 
-                style={styles.boutonAction} 
+                style={styles.boutonIcone} 
                 onPress={() => navigation.navigate('AddMusic')}
               >
-                <Plus color={COLORS.white} size={28} />
+                <Plus color={COLORS.white} size={30} />
               </TouchableOpacity>
             )}
-            {estConnecte && (
-              <TouchableOpacity 
-                style={styles.boutonAction} 
-                onPress={() => deconnecterUtilisateur()}
-              >
-                <LogOut color={COLORS.lightGray} size={24} />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity 
+              style={styles.boutonIcone} 
+              onPress={() => deconnecterUtilisateur()}
+            >
+              <LogOut color={COLORS.lightGray} size={22} />
+            </TouchableOpacity>
           </View>
         </View>
 
-        {!estConnecte && (
-          <View style={styles.encartConnexion}>
-            <Text style={styles.titreConnexion}>Connectez-vous pour créer votre bibliothèque</Text>
-            <Text style={styles.texteConnexion}>
-              Vous pouvez écouter et rechercher sans compte. La connexion est demandée pour ajouter des musiques et personnaliser votre espace.
-            </Text>
-            <View style={styles.actionsConnexion}>
-              <TouchableOpacity
-                style={styles.boutonConnexion}
-                onPress={() => navigation.navigate('Login')}
-              >
-                <Text style={styles.texteBoutonConnexion}>Se connecter</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.boutonInscription}
-                onPress={() => navigation.navigate('Register')}
-              >
-                <Text style={styles.texteBoutonInscription}>Créer un compte</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Filtres (Boutons "Playlists", "Artistes", etc.) */}
-        <View style={styles.conteneurFiltres}>
-          <TouchableOpacity style={styles.piluleFiltreActive}>
-            <Text style={styles.texteFiltreActif}>Playlists</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.piluleFiltre}>
-            <Text style={styles.texteFiltre}>Artistes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.piluleFiltre}>
-            <Text style={styles.texteFiltre}>Albums</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Barre de filtres défilante */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.barreFiltres}>
+          {['Playlists', 'Artistes', 'Albums', 'Podcasts'].map((filtre, index) => (
+            <TouchableOpacity key={index} style={styles.piluleFiltre}>
+              <Text style={styles.texteFiltre}>{filtre}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
-      {/* Liste des playlists */}
+      {/* Options de tri (Récents) */}
+      <View style={styles.barreTri}>
+        <ArrowUpDown color={COLORS.white} size={16} />
+        <Text style={styles.texteTri}>Récents</Text>
+      </View>
+
+      {/* Liste des Playlists / Albums */}
       <FlatList
-        data={estConnecte ? MES_PLAYLISTS_EXEMPLE : []}
+        data={MES_PLAYLISTS_EXEMPLE}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <RenduLignePlaylist item={item} />}
-        contentContainerStyle={styles.listePlaylists}
-        ListEmptyComponent={
-          <View style={styles.bibliothequeVide}>
-            <Music color={COLORS.lightGray} size={40} />
-            <Text style={styles.texteBibliothequeVide}>Votre bibliothèque apparaitra ici après connexion.</Text>
-          </View>
-        }
+        contentContainerStyle={styles.listeContenu}
+        showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
   );
@@ -145,141 +121,103 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.black,
   },
   entete: {
-    padding: SPACING.m,
+    paddingTop: SPACING.m,
+    paddingHorizontal: SPACING.m,
   },
   ligneUtilisateur: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.l,
+    marginBottom: 20,
+  },
+  avatarCercle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F57C00',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.m,
+  },
+  texteAvatar: {
+    color: COLORS.black,
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   titrePage: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: COLORS.white,
     flex: 1,
-    marginLeft: SPACING.m,
   },
   iconesAction: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
-  boutonAction: {
-    marginLeft: SPACING.m,
+  boutonIcone: {
+    marginLeft: 20,
   },
-  encartConnexion: {
-    backgroundColor: COLORS.cardBackground,
-    borderRadius: 10,
-    padding: SPACING.m,
-    marginBottom: SPACING.l,
-  },
-  titreConnexion: {
-    color: COLORS.white,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: SPACING.s,
-  },
-  texteConnexion: {
-    color: COLORS.lightGray,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  actionsConnexion: {
+  barreFiltres: {
     flexDirection: 'row',
-    marginTop: SPACING.m,
-  },
-  boutonConnexion: {
-    backgroundColor: COLORS.green,
-    borderRadius: 24,
-    paddingHorizontal: SPACING.m,
-    paddingVertical: SPACING.s,
-    marginRight: SPACING.s,
-  },
-  boutonInscription: {
-    borderColor: COLORS.lightGray,
-    borderWidth: 1,
-    borderRadius: 24,
-    paddingHorizontal: SPACING.m,
-    paddingVertical: SPACING.s,
-  },
-  texteBoutonConnexion: {
-    color: COLORS.black,
-    fontWeight: 'bold',
-  },
-  texteBoutonInscription: {
-    color: COLORS.white,
-    fontWeight: 'bold',
-  },
-  conteneurFiltres: {
-    flexDirection: 'row',
-    marginBottom: SPACING.s,
+    marginBottom: 10,
   },
   piluleFiltre: {
-    paddingHorizontal: SPACING.m,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#2A2A2A',
-    marginRight: SPACING.s,
-  },
-  piluleFiltreActive: {
-    paddingHorizontal: SPACING.m,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: COLORS.green,
-    marginRight: SPACING.s,
+    marginRight: 8,
   },
   texteFiltre: {
     color: COLORS.white,
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '500',
   },
-  texteFiltreActif: {
-    color: COLORS.black,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  listePlaylists: {
-    paddingHorizontal: SPACING.m,
-    paddingBottom: 100,
-  },
-  bibliothequeVide: {
+  barreTri: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 70,
-    paddingHorizontal: SPACING.l,
+    paddingHorizontal: SPACING.m,
+    paddingVertical: 15,
   },
-  texteBibliothequeVide: {
-    color: COLORS.lightGray,
-    fontSize: 15,
-    marginTop: SPACING.m,
-    textAlign: 'center',
+  texteTri: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  listeContenu: {
+    paddingHorizontal: SPACING.m,
+    paddingBottom: 120,
   },
   conteneurLigne: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.m,
+    marginBottom: 16,
   },
   imagePlaylist: {
     width: 64,
     height: 64,
     borderRadius: 4,
   },
-  carreIconeLike: {
+  carreVioletLike: {
     width: 64,
     height: 64,
     borderRadius: 4,
-    backgroundColor: '#450af5', // Violet Spotify pour les titres likés
+    backgroundColor: '#450af5', 
     justifyContent: 'center',
     alignItems: 'center',
   },
   sectionTexte: {
-    marginLeft: SPACING.m,
+    marginLeft: 12,
     flex: 1,
   },
   nomPlaylist: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   infoCreateur: {
     color: COLORS.lightGray,
-    fontSize: 14,
+    fontSize: 13,
     marginTop: 4,
   },
 });

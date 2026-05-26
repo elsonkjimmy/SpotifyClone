@@ -3,9 +3,16 @@
  * Il utilise la bibliothèque react-native-track-player.
  */
 import TrackPlayer, { Capability, Event, State } from 'react-native-track-player';
+import { Share } from 'react-native';
+
+let estDejaInitialise = false;
+let modeAleatoireActif = false;
+let modeRepetitionActif = false;
 
 // Fonction pour configurer le lecteur au démarrage de l'application
 export const initialiserLeLecteurAudio = async () => {
+  if (estDejaInitialise) return;
+
   try {
     await TrackPlayer.setupPlayer();
     
@@ -20,6 +27,8 @@ export const initialiserLeLecteurAudio = async () => {
       ],
       compactCapabilities: [Capability.Play, Capability.Pause],
     });
+    
+    estDejaInitialise = true;
   } catch (erreur) {
     console.log('Erreur lors de l\'initialisation du lecteur:', erreur);
   }
@@ -50,4 +59,34 @@ export const passerALaMusiqueSuivante = async () => {
 // Fonction pour revenir à la musique précédente
 export const revenirALaMusiquePrecedente = async () => {
   await TrackPlayer.skipToPrevious();
+};
+
+// Fonction pour activer/désactiver le mode aléatoire
+export const basculerModeAleatoire = () => {
+  modeAleatoireActif = !modeAleatoireActif;
+  return modeAleatoireActif;
+};
+
+// Fonction pour activer/désactiver le mode répétition
+export const basculerModeRepetition = () => {
+  modeRepetitionActif = !modeRepetitionActif;
+  return modeRepetitionActif;
+};
+
+// Fonction pour obtenir l'état du mode aléatoire
+export const obtenirEtatModeAleatoire = () => modeAleatoireActif;
+
+// Fonction pour obtenir l'état du mode répétition
+export const obtenirEtatModeRepetition = () => modeRepetitionActif;
+
+// Fonction pour partager une musique
+export const partagerLaMusique = async (titre: string, artiste: string) => {
+  try {
+    await Share.share({
+      message: `Écoute "${titre}" de ${artiste} sur Spotify Clone!`,
+      title: 'Partager la musique',
+    });
+  } catch (erreur: any) {
+    console.log('Erreur lors du partage:', erreur);
+  }
 };

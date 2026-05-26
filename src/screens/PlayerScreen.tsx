@@ -1,8 +1,8 @@
 /**
  * Écran du lecteur audio en plein écran.
- * Affiche la grande pochette, la barre de progression, tous les contrôles, et le menu file d'attente.
+ * Design Premium fidèle à Spotify avec dégradés et contrôles complets.
  */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,7 @@ import {
   Image,
   TouchableOpacity,
   SafeAreaView,
-  ImageStyle,
-  Modal,
-  FlatList,
-  Alert,
+  Dimensions,
 } from 'react-native';
 import { 
   ChevronDown, 
@@ -25,9 +22,8 @@ import {
   Repeat, 
   Shuffle,
   Heart,
-  ListMusic,
-  X,
-  Volume2
+  Share2,
+  Laptop2
 } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import LinearGradient from 'react-native-linear-gradient';
@@ -35,296 +31,251 @@ import { COLORS, SPACING } from '../theme/colors';
 import { 
   basculerLecturePause, 
   passerALaMusiqueSuivante, 
-  revenirALaMusiquePrecedente 
+  revenirALaMusiquePrecedente,
+  basculerModeAleatoire,
+  basculerModeRepetition,
+  obtenirEtatModeAleatoire,
+  obtenirEtatModeRepetition,
+  partagerLaMusique
 } from '../services/ServiceLecteurAudio';
-import TrackPlayer, { usePlaybackState, State, useActiveTrack, useProgress } from 'react-native-track-player';
+import { usePlaybackState, State, useActiveTrack, useProgress } from 'react-native-track-player';
+
+const { width } = Dimensions.get('window');
 
 const EcranLecteurPleinEcran = ({ navigation }: any) => {
   const etatLecture = usePlaybackState();
   const morceauActuel = useActiveTrack();
   const { position, duration } = useProgress();
 
-  const [estFavori, setEstFavori] = useState(false);
-  const [afficherFileDAttente, setAfficherFileDAttente] = useState(false);
-  const [fileDAttente, setFileDAttente] = useState<any[]>([]);
-
-  // Charge la file d'attente (queue) depuis TrackPlayer
-  useEffect(() => {
-    const chargerFileDAttente = async () => {
-      try {
-        const queue = await TrackPlayer.getQueue();
-        setFileDAttente(queue);
-      } catch (erreur) {
-        console.error('Erreur chargement file d\'attente:', erreur);
-      }
-    };
-    if (afficherFileDAttente) {
-      chargerFileDAttente();
-    }
-  }, [afficherFileDAttente, morceauActuel]);
+  const [modeAleatoireActif, setModeAleatoireActif] = React.useState(false);
+  const [modeRepetitionActif, setModeRepetitionActif] = React.useState(false);
 
   if (!morceauActuel) return null;
 
   const estEnTrainDeJouer = etatLecture.state === State.Playing;
 
-  // Formater le temps (secondes -> mm:ss)
   const formaterLeTemps = (secondes: number) => {
     const mins = Math.floor(secondes / 60);
     const secs = Math.floor(secondes % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  // Afficher les options supplémentaires (bouton trois points)
-  const afficherOptionsMusique = () => {
-    Alert.alert(
-      morceauActuel.title || 'Options',
-      `Artiste : ${morceauActuel.artist || 'Inconnu'}`,
-      [
-        { text: 'Ajouter aux favoris', onPress: () => setEstFavori(true) },
-        { text: 'Partager cette musique', onPress: () => {} },
-        { text: 'Fermer', style: 'cancel' }
-      ]
-    );
+  const gererAleatoire = () => {
+    setModeAleatoireActif(basculerModeAleatoire());
+  };
+
+  const gererRepetition = () => {
+    setModeRepetitionActif(basculerModeRepetition());
+  };
+
+  const gererPartage = async () => {
+    await partagerLaMusique(morceauActuel.title || 'Musique', morceauActuel.artist || 'Artiste');
   };
 
   return (
-    <LinearGradient
-      colors={['#1c352d', '#121212', '#050505']}
-      style={styles.conteneurGradient}
-    >
-      <SafeAreaView style={styles.conteneurPrincipal}>
-        {/* En-tête : Bouton retour et titre de la playlist */}
+    <View style={styles.conteneurGlobal}>
+      {/* Fond dégradé immersif */}
+      <LinearGradient 
+        colors={['#555555', COLORS.black]} 
+        style={styles.degradeFond} 
+      />
+
+      <SafeAreaView style={styles.zoneContenu}>
+        {/* En-tête : Réduire et Options */}
         <View style={styles.entete}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.boutonIcone}>
             <ChevronDown color={COLORS.white} size={30} />
           </TouchableOpacity>
-          <Text style={styles.textePlaylist}>LECTURE EN COURS</Text>
-          <TouchableOpacity onPress={afficherOptionsMusique}>
-            <MoreHorizontal color={COLORS.white} size={30} />
+          <View style={styles.sectionTitreEntete}>
+            <Text style={styles.textePetitTitre}>LECTURE EN COURS</Text>
+            <Text style={styles.textePlaylistTitre} numberOfLines={1}>Favoris</Text>
+          </View>
+          <TouchableOpacity style={styles.boutonIcone}>
+            <MoreHorizontal color={COLORS.white} size={28} />
           </TouchableOpacity>
         </View>
 
-        {/* Image de couverture (Grande) */}
+        {/* Image de couverture */}
         <View style={styles.sectionImage}>
-          <Image source={{ uri: morceauActuel.artwork }} style={styles.grandeImage as ImageStyle} />
+          <View style={styles.conteneurOmbreImage}>
+            <Image source={{ uri: morceauActuel.artwork }} style={styles.pochetteAlbum} />
+          </View>
         </View>
 
-        {/* Titre et Artiste */}
-        <View style={styles.sectionInfo}>
-          <View style={styles.detailsMusique}>
-            <Text style={styles.titreMusique} numberOfLines={1}>
-              {morceauActuel.title}
-            </Text>
-            <Text style={styles.artisteMusique} numberOfLines={1}>
-              {morceauActuel.artist}
-            </Text>
+        {/* Infos Musique et Like */}
+        <View style={styles.sectionInfosMusique}>
+          <View style={styles.blocTexte}>
+            <Text style={styles.titrePrincipal} numberOfLines={1}>{morceauActuel.title}</Text>
+            <Text style={styles.artistePrincipal} numberOfLines={1}>{morceauActuel.artist}</Text>
           </View>
-          <TouchableOpacity onPress={() => setEstFavori(!estFavori)}>
-            <Heart 
-              color={estFavori ? COLORS.green : COLORS.white} 
-              size={28} 
-              fill={estFavori ? COLORS.green : 'transparent'} 
-            />
+          <TouchableOpacity>
+            <Heart color={COLORS.green} size={28} fill={COLORS.green} />
           </TouchableOpacity>
         </View>
 
         {/* Barre de progression */}
         <View style={styles.sectionProgression}>
           <Slider
-            style={styles.barreSlider}
+            style={styles.slider}
             minimumValue={0}
             maximumValue={duration}
             value={position}
             minimumTrackTintColor={COLORS.white}
-            maximumTrackTintColor="#5e5e5e"
+            maximumTrackTintColor="rgba(255,255,255,0.2)"
             thumbTintColor={COLORS.white}
-            onSlidingComplete={async (valeur) => {
-              await TrackPlayer.seekTo(valeur);
-            }}
           />
           <View style={styles.tempsConteneur}>
-            <Text style={styles.texteTemps}>{formaterLeTemps(position)}</Text>
-            <Text style={styles.texteTemps}>{formaterLeTemps(duration)}</Text>
+            <Text style={styles.texteChrono}>{formaterLeTemps(position)}</Text>
+            <Text style={styles.texteChrono}>{formaterLeTemps(duration)}</Text>
           </View>
         </View>
 
-        {/* Contrôles de lecture principaux */}
+        {/* Contrôles Principaux */}
         <View style={styles.sectionControles}>
-          <TouchableOpacity>
-            <Shuffle color={COLORS.green} size={24} />
+          <TouchableOpacity onPress={gererAleatoire}>
+            <Shuffle color={modeAleatoireActif ? COLORS.green : COLORS.white} size={24} />
           </TouchableOpacity>
           
           <TouchableOpacity onPress={revenirALaMusiquePrecedente}>
-            <SkipBack color={COLORS.white} size={35} fill={COLORS.white} />
+            <SkipBack color={COLORS.white} size={36} fill={COLORS.white} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.boutonPlayPause} onPress={basculerLecturePause}>
+          <TouchableOpacity style={styles.boutonCerclePlay} onPress={basculerLecturePause}>
             {estEnTrainDeJouer ? (
-              <Pause color={COLORS.black} size={35} fill={COLORS.black} />
+              <Pause color={COLORS.black} size={34} fill={COLORS.black} />
             ) : (
-              <Play color={COLORS.black} size={35} fill={COLORS.black} />
+              <Play color={COLORS.black} size={34} fill={COLORS.black} />
             )}
           </TouchableOpacity>
 
           <TouchableOpacity onPress={passerALaMusiqueSuivante}>
-            <SkipForward color={COLORS.white} size={35} fill={COLORS.white} />
+            <SkipForward color={COLORS.white} size={36} fill={COLORS.white} />
           </TouchableOpacity>
 
-          <TouchableOpacity>
-            <Repeat color={COLORS.green} size={24} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Barre du bas : Périphériques et File d'attente (les 3 traits) */}
-        <View style={styles.barreBasDePage}>
-          <View style={styles.zoneAppareil}>
-            <Volume2 color={COLORS.green} size={20} />
-            <Text style={styles.texteAppareil}>Émulateur Android</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.boutonQueue} 
-            onPress={() => setAfficherFileDAttente(true)}
-          >
-            <ListMusic color={COLORS.white} size={26} />
+          <TouchableOpacity onPress={gererRepetition}>
+            <Repeat color={modeRepetitionActif ? COLORS.green : COLORS.white} size={24} />
           </TouchableOpacity>
         </View>
 
-        {/* Modal File d'attente (Queue) */}
-        <Modal
-          visible={afficherFileDAttente}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setAfficherFileDAttente(false)}
-        >
-          <View style={styles.conteneurModal}>
-            <View style={styles.contenuModal}>
-              <View style={styles.enTeteModal}>
-                <Text style={styles.titreModal}>File d'attente</Text>
-                <TouchableOpacity onPress={() => setAfficherFileDAttente(false)}>
-                  <X color={COLORS.white} size={26} />
-                </TouchableOpacity>
-              </View>
-
-              <FlatList
-                data={fileDAttente}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item, index }) => {
-                  const estMusiqueActive = item.id === morceauActuel.id;
-                  return (
-                    <TouchableOpacity 
-                      style={[styles.ligneMusiqueQueue, estMusiqueActive && styles.ligneMusiqueActive]}
-                      onPress={async () => {
-                        await TrackPlayer.skip(index);
-                        await TrackPlayer.play();
-                        setAfficherFileDAttente(false);
-                      }}
-                    >
-                      <Image source={{ uri: item.artwork }} style={styles.imageMiniatureQueue} />
-                      <View style={styles.infosQueue}>
-                        <Text 
-                          style={[styles.titreQueue, estMusiqueActive && { color: COLORS.green }]}
-                          numberOfLines={1}
-                        >
-                          {item.title}
-                        </Text>
-                        <Text style={styles.artisteQueue} numberOfLines={1}>
-                          {item.artist}
-                        </Text>
-                      </View>
-                      {estMusiqueActive && (
-                        <Text style={styles.badgeEnCours}>LECTURE</Text>
-                      )}
-                    </TouchableOpacity>
-                  );
-                }}
-                contentContainerStyle={styles.listeQueue}
-              />
-            </View>
-          </View>
-        </Modal>
+        {/* Pied de page : Périphériques et Partage */}
+        <View style={styles.basDePage}>
+          <TouchableOpacity style={styles.boutonBas}>
+            <Laptop2 color={COLORS.green} size={20} />
+            <Text style={styles.texteDevice}>Écoute sur cet appareil</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={gererPartage}>
+            <Share2 color={COLORS.white} size={20} />
+          </TouchableOpacity>
+        </View>
 
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  conteneurGradient: {
+  conteneurGlobal: {
     flex: 1,
+    backgroundColor: COLORS.black,
   },
-  conteneurPrincipal: {
+  degradeFond: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  zoneContenu: {
     flex: 1,
     paddingHorizontal: SPACING.l,
-    justifyContent: 'space-between',
-    paddingBottom: SPACING.l,
   },
   entete: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: SPACING.m,
+    justifyContent: 'space-between',
+    marginTop: 10,
+    height: 60,
   },
-  textePlaylist: {
+  boutonIcone: {
+    padding: 5,
+  },
+  sectionTitreEntete: {
     flex: 1,
-    textAlign: 'center',
+    alignItems: 'center',
+  },
+  textePetitTitre: {
     color: COLORS.white,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
+  },
+  textePlaylistTitre: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginTop: 2,
   },
   sectionImage: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: SPACING.l,
+    marginVertical: 20,
   },
-  grandeImage: {
-    width: '100%',
-    aspectRatio: 1,
+  conteneurOmbreImage: {
+    elevation: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
     borderRadius: 8,
-    backgroundColor: COLORS.cardBackground,
   },
-  sectionInfo: {
+  pochetteAlbum: {
+    width: width - (SPACING.l * 2),
+    height: width - (SPACING.l * 2),
+    borderRadius: 8,
+  },
+  sectionInfosMusique: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.m,
+    marginBottom: 20,
   },
-  detailsMusique: {
+  blocTexte: {
     flex: 1,
-    marginRight: SPACING.m,
+    marginRight: 15,
   },
-  titreMusique: {
+  titrePrincipal: {
     color: COLORS.white,
     fontSize: 24,
     fontWeight: 'bold',
   },
-  artisteMusique: {
+  artistePrincipal: {
     color: COLORS.lightGray,
     fontSize: 18,
-    marginTop: 4,
+    marginTop: 5,
+    fontWeight: '500',
   },
   sectionProgression: {
-    marginBottom: SPACING.m,
+    marginBottom: 20,
   },
-  barreSlider: {
-    width: '100%',
+  slider: {
+    width: '105%',
     height: 40,
+    alignSelf: 'center',
   },
   tempsConteneur: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: -8,
+    marginTop: -5,
   },
-  texteTemps: {
+  texteChrono: {
     color: COLORS.lightGray,
     fontSize: 12,
+    fontWeight: '500',
   },
   sectionControles: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.l,
+    marginBottom: 40,
   },
-  boutonPlayPause: {
+  boutonCerclePlay: {
     backgroundColor: COLORS.white,
     width: 72,
     height: 72,
@@ -332,97 +283,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  barreBasDePage: {
+  basDePage: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: SPACING.s,
-    borderTopWidth: 0.5,
-    borderTopColor: '#2b2b2b',
+    paddingBottom: 10,
   },
-  zoneAppareil: {
+  boutonBas: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  texteAppareil: {
+  texteDevice: {
     color: COLORS.green,
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: SPACING.s,
-  },
-  boutonQueue: {
-    padding: SPACING.s,
-  },
-  // Modal de file d'attente
-  conteneurModal: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  contenuModal: {
-    backgroundColor: '#181818',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    height: '75%',
-    padding: SPACING.l,
-  },
-  enTeteModal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.l,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#2b2b2b',
-    paddingBottom: SPACING.m,
-  },
-  titreModal: {
-    color: COLORS.white,
-    fontSize: 20,
+    fontSize: 11,
     fontWeight: 'bold',
-  },
-  listeQueue: {
-    paddingBottom: SPACING.xl,
-  },
-  ligneMusiqueQueue: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.m,
-    borderRadius: 8,
-    paddingHorizontal: SPACING.s,
-    marginBottom: SPACING.s,
-  },
-  ligneMusiqueActive: {
-    backgroundColor: '#282828',
-  },
-  imageMiniatureQueue: {
-    width: 48,
-    height: 48,
-    borderRadius: 4,
-    backgroundColor: COLORS.cardBackground,
-  },
-  infosQueue: {
-    flex: 1,
-    marginLeft: SPACING.m,
-  },
-  titreQueue: {
-    color: COLORS.white,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  artisteQueue: {
-    color: COLORS.lightGray,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  badgeEnCours: {
-    color: COLORS.black,
-    backgroundColor: COLORS.green,
-    fontSize: 10,
-    fontWeight: 'bold',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    overflow: 'hidden',
+    marginLeft: 10,
   },
 });
 

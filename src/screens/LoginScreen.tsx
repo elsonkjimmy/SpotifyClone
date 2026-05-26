@@ -1,6 +1,6 @@
 /**
- * Écran de connexion (Login).
- * Permet à l'utilisateur d'accéder à son compte Spotify Clone.
+ * Écran de connexion (Login) - Version Premium.
+ * Design immersif avec dégradé et logo officiel.
  */
 import React, { useState } from 'react';
 import {
@@ -14,28 +14,24 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { COLORS, SPACING } from '../theme/colors';
-import SpotifyLogo from '../components/SpotifyLogo';
 import { connecterUtilisateurAvecEmail } from '../services/auth';
+import SpotifyLogo from '../components/SpotifyLogo';
 
 const EcranDeConnexion = ({ navigation }: any) => {
-  // États pour stocker les informations saisies par l'utilisateur
   const [adresseEmail, setAdresseEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [estEnTrainDeCharger, setEstEnTrainDeCharger] = useState(false);
 
-  // Fonction déclenchée quand l'utilisateur appuie sur le bouton "Se connecter"
   const gererActionDeConnexion = async () => {
     if (!adresseEmail || !motDePasse) {
       Alert.alert('Champs vides', 'Veuillez saisir votre email et votre mot de passe');
       return;
     }
-
     setEstEnTrainDeCharger(true);
     try {
-      // Appel au service Firebase pour vérifier les identifiants
       await connecterUtilisateurAvecEmail(adresseEmail, motDePasse);
-      navigation.navigate('Main');
     } catch (erreur: any) {
       Alert.alert('Erreur de connexion', erreur.message);
     } finally {
@@ -44,147 +40,106 @@ const EcranDeConnexion = ({ navigation }: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.conteneurPrincipal}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.conteneurInterne}
-      >
-        <View style={styles.sectionLogo}>
-          <SpotifyLogo size={86} />
-          <Text style={styles.texteSpotify}>Spotify</Text>
-          <Text style={styles.texteIntro}>Connectez-vous seulement pour vos actions personnelles.</Text>
-        </View>
+    <View style={styles.conteneurGlobal}>
+      <LinearGradient colors={['#222222', COLORS.black]} style={styles.degrade} />
+      
+      <SafeAreaView style={styles.zoneContenu}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.clavierVue}
+        >
+          <View style={styles.sectionLogo}>
+            <SpotifyLogo size={80} />
+            <Text style={styles.texteSlogan}>Des millions de titres.{"\n"}Gratuit sur Spotify.</Text>
+          </View>
 
-        <View style={styles.sectionFormulaire}>
-          <Text style={styles.labelChamp}>E-mail ou nom d'utilisateur</Text>
-          <TextInput
-            style={styles.champSaisie}
-            value={adresseEmail}
-            onChangeText={setAdresseEmail}
-            placeholder="Ex: etudiant@ict.com"
-            placeholderTextColor={COLORS.lightGray}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
+          <View style={styles.formulaire}>
+            <View style={styles.blocChamp}>
+              <Text style={styles.label}>E-mail ou nom d'utilisateur</Text>
+              <TextInput
+                style={styles.input}
+                value={adresseEmail}
+                onChangeText={setAdresseEmail}
+                placeholder="Ex: etudiant@ict.com"
+                placeholderTextColor="#777"
+                autoCapitalize="none"
+              />
+            </View>
 
-          <Text style={styles.labelChamp}>Mot de passe</Text>
-          <TextInput
-            style={styles.champSaisie}
-            value={motDePasse}
-            onChangeText={setMotDePasse}
-            placeholder="Votre mot de passe"
-            placeholderTextColor={COLORS.lightGray}
-            secureTextEntry
-          />
+            <View style={styles.blocChamp}>
+              <Text style={styles.label}>Mot de passe</Text>
+              <TextInput
+                style={styles.input}
+                value={motDePasse}
+                onChangeText={setMotDePasse}
+                placeholder="Votre mot de passe"
+                placeholderTextColor="#777"
+                secureTextEntry
+              />
+            </View>
 
-          <TouchableOpacity
-            style={[styles.boutonConnexionVert, estEnTrainDeCharger && { opacity: 0.7 }]}
-            onPress={gererActionDeConnexion}
-            disabled={estEnTrainDeCharger}
-          >
-            <Text style={styles.texteBoutonConnexion}>
-              {estEnTrainDeCharger ? 'Vérification...' : 'Se connecter'}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.boutonConnexion, estEnTrainDeCharger && { opacity: 0.5 }]}
+              onPress={gererActionDeConnexion}
+              disabled={estEnTrainDeCharger}
+            >
+              <Text style={styles.texteBouton}>SE CONNECTER</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.lienVersInscription}
-            onPress={() => navigation.navigate('Register')}
-          >
-            <Text style={styles.texteLien}>
-              Pas de compte ? <Text style={styles.texteSInscrire}>S'inscrire</Text>
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.lienContinuer}
-            onPress={() => navigation.navigate('Main')}
-          >
-            <Text style={styles.texteContinuer}>Continuer sans compte</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            <TouchableOpacity
+              style={styles.boutonInscription}
+              onPress={() => navigation.navigate('Register')}
+            >
+              <Text style={styles.texteInscription}>S'INSCRIRE GRATUITEMENT</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  conteneurPrincipal: {
-    flex: 1,
-    backgroundColor: COLORS.black,
+  conteneurGlobal: { flex: 1, backgroundColor: COLORS.black },
+  degrade: { ...StyleSheet.absoluteFillObject },
+  zoneContenu: { flex: 1 },
+  clavierVue: { flex: 1, paddingHorizontal: SPACING.xl, justifyContent: 'center' },
+  sectionLogo: { alignItems: 'center', marginBottom: 60 },
+  texteSlogan: { 
+    color: COLORS.white, 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    textAlign: 'center', 
+    marginTop: 20,
+    lineHeight: 36 
   },
-  conteneurInterne: {
-    flex: 1,
-    padding: SPACING.l,
-    justifyContent: 'center',
+  formulaire: { width: '100%' },
+  blocChamp: { marginBottom: 20 },
+  label: { color: COLORS.white, fontSize: 13, fontWeight: 'bold', marginBottom: 8 },
+  input: { 
+    backgroundColor: '#333', 
+    color: COLORS.white, 
+    padding: 15, 
+    borderRadius: 4, 
+    fontSize: 16 
   },
-  sectionLogo: {
-    alignItems: 'center',
-    marginBottom: 50,
+  boutonConnexion: { 
+    backgroundColor: COLORS.green, 
+    padding: 16, 
+    borderRadius: 30, 
+    alignItems: 'center', 
+    marginTop: 20 
   },
-  texteSpotify: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.white,
-    marginTop: SPACING.s,
+  texteBouton: { color: COLORS.black, fontWeight: 'bold', fontSize: 15, letterSpacing: 1 },
+  boutonInscription: { 
+    borderWidth: 1, 
+    borderColor: '#777', 
+    padding: 14, 
+    borderRadius: 30, 
+    alignItems: 'center', 
+    marginTop: 15 
   },
-  texteIntro: {
-    color: COLORS.lightGray,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: SPACING.s,
-    textAlign: 'center',
-  },
-  sectionFormulaire: {
-    width: '100%',
-  },
-  labelChamp: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.white,
-    marginBottom: SPACING.s,
-  },
-  champSaisie: {
-    backgroundColor: COLORS.cardBackground,
-    color: COLORS.white,
-    padding: SPACING.m,
-    borderRadius: 5,
-    marginBottom: SPACING.l,
-    fontSize: 16,
-  },
-  boutonConnexionVert: {
-    backgroundColor: COLORS.green,
-    padding: SPACING.m,
-    borderRadius: 30,
-    alignItems: 'center',
-    marginTop: SPACING.m,
-  },
-  texteBoutonConnexion: {
-    color: COLORS.black,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  lienVersInscription: {
-    marginTop: SPACING.xl,
-    alignItems: 'center',
-  },
-  texteLien: {
-    color: COLORS.white,
-    fontSize: 14,
-  },
-  texteSInscrire: {
-    color: COLORS.green,
-    fontWeight: 'bold',
-  },
-  lienContinuer: {
-    marginTop: SPACING.l,
-    alignItems: 'center',
-  },
-  texteContinuer: {
-    color: COLORS.lightGray,
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  texteInscription: { color: COLORS.white, fontWeight: 'bold', fontSize: 13 },
 });
 
 export default EcranDeConnexion;

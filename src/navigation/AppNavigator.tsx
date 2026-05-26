@@ -1,28 +1,32 @@
 /**
  * Ce fichier gère la navigation principale de l'application.
- * Il décide si on affiche les écrans de connexion ou l'application principale.
+ * Il permet d'accéder à l'application sans forcément se connecter.
  */
 import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Home, Search, Library } from 'lucide-react-native';
+import { Home, Search, Library, User } from 'lucide-react-native';
+
 import HomeScreen from '../screens/HomeScreen';
 import EcranRecherche from '../screens/SearchScreen';
 import EcranMaBibliotheque from '../screens/LibraryScreen';
+import EcranMonCompte from '../screens/AccountScreen';
 import EcranDeConnexion from '../screens/LoginScreen';
 import EcranDInscription from '../screens/RegisterScreen';
 import EcranLecteurPleinEcran from '../screens/PlayerScreen';
 import EcranAjouterMusique from '../screens/AddMusicScreen';
+import EcranDetailPlaylist from '../screens/PlaylistDetailScreen';
+import EcranDemarrage from '../screens/SplashScreen';
+
 import MiniLecteurAudio from '../components/MiniLecteurAudio';
-import SplashScreen from '../components/SplashScreen';
 import { COLORS } from '../theme/colors';
 import { surveillerChangementEtatAuthentification } from '../services/auth';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Le navigateur par onglets (bas de l'écran) pour l'application une fois connecté
+// Le navigateur par onglets avec 4 écrans désormais
 const NavigateurParOnglets = () => {
   return (
     <View style={{ flex: 1 }}>
@@ -32,6 +36,8 @@ const NavigateurParOnglets = () => {
           tabBarStyle: {
             backgroundColor: COLORS.tabBarBackground,
             borderTopWidth: 0,
+            height: 60,
+            paddingBottom: 5,
           },
           tabBarActiveTintColor: COLORS.green,
           tabBarInactiveTintColor: COLORS.lightGray,
@@ -53,7 +59,6 @@ const NavigateurParOnglets = () => {
             tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
           }}
         />
-
         <Tab.Screen
           name="Library"
           component={EcranMaBibliotheque}
@@ -62,55 +67,49 @@ const NavigateurParOnglets = () => {
             tabBarIcon: ({ color, size }) => <Library color={color} size={size} />,
           }}
         />
-
+        <Tab.Screen
+          name="Account"
+          component={EcranMonCompte}
+          options={{
+            tabBarLabel: 'Compte',
+            tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+          }}
+        />
       </Tab.Navigator>
-      
-      {/* On affiche le mini lecteur ici pour qu'il soit par-dessus la navigation */}
       <MiniLecteurAudio />
     </View>
   );
 };
 
-// Le navigateur principal qui gère le flux Login vs App
 const AppNavigator = () => {
   const [utilisateurConnecte, setUtilisateurConnecte] = useState<any>(null);
   const [estEnTrainDInitialiser, setEstEnTrainDInitialiser] = useState(true);
 
   useEffect(() => {
-    // On écoute Firebase pour savoir si un utilisateur est déjà connecté
     const desabonner = surveillerChangementEtatAuthentification((etatUtilisateur) => {
       setUtilisateurConnecte(etatUtilisateur);
-      if (estEnTrainDInitialiser) setEstEnTrainDInitialiser(false);
+      
+      // Delai Splash Screen
+      setTimeout(() => {
+        setEstEnTrainDInitialiser(false);
+      }, 2000);
     });
     return desabonner;
   }, []);
 
-  // Si Firebase n'a pas encore répondu, on affiche un vrai splash au lieu d'un écran blanc.
-  if (estEnTrainDInitialiser) return <SplashScreen />;
+  if (estEnTrainDInitialiser) return <EcranDemarrage />;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {/* On peut maintenant entrer dans l'app sans login */}
       <Stack.Screen name="Main" component={NavigateurParOnglets} />
-      <Stack.Screen 
-        name="Player" 
-        component={EcranLecteurPleinEcran} 
-        options={{ presentation: 'modal' }} 
-      />
-      <Stack.Screen 
-        name="AddMusic" 
-        component={EcranAjouterMusique} 
-        options={{ presentation: 'modal' }} 
-      />
-      <Stack.Screen 
-        name="Login" 
-        component={EcranDeConnexion} 
-        options={{ presentation: 'modal' }} 
-      />
-      <Stack.Screen 
-        name="Register" 
-        component={EcranDInscription} 
-        options={{ presentation: 'modal' }} 
-      />
+      
+      {/* Écrans additionnels accessibles depuis la stack */}
+      <Stack.Screen name="Player" component={EcranLecteurPleinEcran} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="AddMusic" component={EcranAjouterMusique} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="PlaylistDetail" component={EcranDetailPlaylist} />
+      <Stack.Screen name="Login" component={EcranDeConnexion} />
+      <Stack.Screen name="Register" component={EcranDInscription} />
     </Stack.Navigator>
   );
 };

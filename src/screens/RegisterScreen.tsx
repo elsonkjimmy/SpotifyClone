@@ -1,6 +1,5 @@
 /**
- * Écran d'inscription (Register).
- * Permet à un nouvel utilisateur de créer son compte.
+ * Écran d'inscription (Register) - Version Premium.
  */
 import React, { useState } from 'react';
 import {
@@ -14,35 +13,30 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { COLORS, SPACING } from '../theme/colors';
-import SpotifyLogo from '../components/SpotifyLogo';
 import { creerCompteUtilisateurAvecEmail } from '../services/auth';
+import SpotifyLogo from '../components/SpotifyLogo';
 
 const EcranDInscription = ({ navigation }: any) => {
-  // États pour stocker les informations du nouvel utilisateur
   const [emailSaisi, setEmailSaisi] = useState('');
   const [motDePasseSaisi, setMotDePasseSaisi] = useState('');
   const [confirmationMotDePasse, setConfirmationMotDePasse] = useState('');
   const [estEnTrainDeCharger, setEstEnTrainDeCharger] = useState(false);
 
-  // Fonction pour valider les données et créer le compte dans Firebase
   const gererActionDInscription = async () => {
     if (!emailSaisi || !motDePasseSaisi || !confirmationMotDePasse) {
-      Alert.alert('Champs incomplets', 'Veuillez remplir tous les champs du formulaire');
+      Alert.alert('Champs incomplets', 'Veuillez remplir tous les champs');
       return;
     }
-
     if (motDePasseSaisi !== confirmationMotDePasse) {
-      Alert.alert('Attention', 'Les deux mots de passe ne sont pas identiques');
+      Alert.alert('Attention', 'Les mots de passe ne sont pas identiques');
       return;
     }
-
     setEstEnTrainDeCharger(true);
     try {
-      // Appel au service pour créer le compte
       await creerCompteUtilisateurAvecEmail(emailSaisi, motDePasseSaisi);
-      Alert.alert('Succès', 'Votre compte a été créé.');
-      navigation.navigate('Main');
+      // Connecté auto par Firebase
     } catch (erreur: any) {
       Alert.alert("Échec de l'inscription", erreur.message);
     } finally {
@@ -51,123 +45,95 @@ const EcranDInscription = ({ navigation }: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.conteneurPrincipal}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.conteneurInterne}
-      >
-        <View style={styles.entete}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.boutonRetour}>
-            <Text style={styles.flecheRetour}>←</Text>
-          </TouchableOpacity>
-          <SpotifyLogo size={34} />
-          <Text style={styles.titrePage}>Créer un compte</Text>
-        </View>
+    <View style={styles.conteneurGlobal}>
+      <LinearGradient colors={['#222222', COLORS.black]} style={styles.degrade} />
+      
+      <SafeAreaView style={styles.zoneContenu}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.clavierVue}
+        >
+          <View style={styles.sectionLogo}>
+            <SpotifyLogo size={50} />
+            <Text style={styles.titrePage}>Créer un compte</Text>
+          </View>
 
-        <View style={styles.formulaire}>
-          <Text style={styles.labelChamp}>Quel est votre e-mail ?</Text>
-          <TextInput
-            style={styles.champSaisie}
-            value={emailSaisi}
-            onChangeText={setEmailSaisi}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholder="etudiant@ict.com"
-            placeholderTextColor={COLORS.lightGray}
-          />
+          <View style={styles.formulaire}>
+            <View style={styles.blocChamp}>
+              <Text style={styles.label}>Quel est votre e-mail ?</Text>
+              <TextInput
+                style={styles.input}
+                value={emailSaisi}
+                onChangeText={setEmailSaisi}
+                placeholder="etudiant@ict.com"
+                placeholderTextColor="#777"
+                autoCapitalize="none"
+              />
+            </View>
 
-          <Text style={styles.labelChamp}>Créez un mot de passe</Text>
-          <TextInput
-            style={styles.champSaisie}
-            value={motDePasseSaisi}
-            onChangeText={setMotDePasseSaisi}
-            secureTextEntry
-            placeholder="Au moins 6 caractères"
-            placeholderTextColor={COLORS.lightGray}
-          />
+            <View style={styles.blocChamp}>
+              <Text style={styles.label}>Créez un mot de passe</Text>
+              <TextInput
+                style={styles.input}
+                value={motDePasseSaisi}
+                onChangeText={setMotDePasseSaisi}
+                secureTextEntry
+                placeholder="Au moins 6 caractères"
+                placeholderTextColor="#777"
+              />
+            </View>
 
-          <Text style={styles.labelChamp}>Confirmez le mot de passe</Text>
-          <TextInput
-            style={styles.champSaisie}
-            value={confirmationMotDePasse}
-            onChangeText={setConfirmationMotDePasse}
-            secureTextEntry
-            placeholder="Répétez le mot de passe"
-            placeholderTextColor={COLORS.lightGray}
-          />
+            <View style={styles.blocChamp}>
+              <Text style={styles.label}>Confirmez le mot de passe</Text>
+              <TextInput
+                style={styles.input}
+                value={confirmationMotDePasse}
+                onChangeText={setConfirmationMotDePasse}
+                secureTextEntry
+                placeholder="Répétez le mot de passe"
+                placeholderTextColor="#777"
+              />
+            </View>
 
-          <TouchableOpacity
-            style={[styles.boutonInscriptionVert, estEnTrainDeCharger && { opacity: 0.7 }]}
-            onPress={gererActionDInscription}
-            disabled={estEnTrainDeCharger}
-          >
-            <Text style={styles.texteBoutonInscription}>
-              {estEnTrainDeCharger ? 'Création en cours...' : "S'inscrire"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            <TouchableOpacity
+              style={[styles.boutonInscription, estEnTrainDeCharger && { opacity: 0.5 }]}
+              onPress={gererActionDInscription}
+              disabled={estEnTrainDeCharger}
+            >
+              <Text style={styles.texteBouton}>CRÉER LE COMPTE</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.boutonRetour} onPress={() => navigation.goBack()}>
+              <Text style={styles.texteRetour}>Déjà un compte ? Se connecter</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  conteneurPrincipal: {
-    flex: 1,
-    backgroundColor: COLORS.black,
+  conteneurGlobal: { flex: 1, backgroundColor: COLORS.black },
+  degrade: { ...StyleSheet.absoluteFillObject },
+  zoneContenu: { flex: 1 },
+  clavierVue: { flex: 1, paddingHorizontal: SPACING.xl, justifyContent: 'center' },
+  sectionLogo: { alignItems: 'center', marginBottom: 40 },
+  titrePage: { color: COLORS.white, fontSize: 24, fontWeight: 'bold', marginTop: 15 },
+  formulaire: { width: '100%' },
+  blocChamp: { marginBottom: 20 },
+  label: { color: COLORS.white, fontSize: 13, fontWeight: 'bold', marginBottom: 8 },
+  input: { backgroundColor: '#333', color: COLORS.white, padding: 15, borderRadius: 4, fontSize: 16 },
+  boutonInscription: { 
+    backgroundColor: COLORS.green, 
+    padding: 16, 
+    borderRadius: 30, 
+    alignItems: 'center', 
+    marginTop: 20 
   },
-  conteneurInterne: {
-    flex: 1,
-    padding: SPACING.l,
-  },
-  entete: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  boutonRetour: {
-    padding: 10,
-    marginLeft: -10,
-  },
-  flecheRetour: {
-    color: COLORS.white,
-    fontSize: 28,
-  },
-  titrePage: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.white,
-    marginLeft: SPACING.s,
-  },
-  formulaire: {
-    flex: 1,
-  },
-  labelChamp: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.white,
-    marginBottom: SPACING.s,
-  },
-  champSaisie: {
-    backgroundColor: COLORS.cardBackground,
-    color: COLORS.white,
-    padding: SPACING.m,
-    borderRadius: 5,
-    marginBottom: SPACING.xl,
-    fontSize: 16,
-  },
-  boutonInscriptionVert: {
-    backgroundColor: COLORS.green,
-    padding: SPACING.m,
-    borderRadius: 30,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  texteBoutonInscription: {
-    color: COLORS.black,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+  texteBouton: { color: COLORS.black, fontWeight: 'bold', fontSize: 15, letterSpacing: 1 },
+  boutonRetour: { marginTop: 20, alignItems: 'center' },
+  texteRetour: { color: COLORS.white, fontSize: 13, fontWeight: '500', textDecorationLine: 'underline' },
 });
 
 export default EcranDInscription;
