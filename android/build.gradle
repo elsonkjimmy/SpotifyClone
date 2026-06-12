@@ -88,7 +88,6 @@ subprojects {
         resolutionStrategy {
             force 'androidx.activity:activity:1.8.0'
             force 'androidx.activity:activity-ktx:1.8.0'
-            force 'androidx.browser:browser:1.7.0'
         }
     }
 
