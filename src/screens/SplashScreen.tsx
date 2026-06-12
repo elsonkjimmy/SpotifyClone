@@ -2,12 +2,12 @@
  * Écran de démarrage (Splash Screen).
  * S'affiche pendant 2 secondes au lancement de l'application.
  */
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
-import { COLORS } from '../theme/colors';
+import React, {useEffect, useRef} from 'react';
+import {View, Text, StyleSheet, Animated} from 'react-native';
+import {COLORS} from '../theme/colors';
 import SpotifyLogo from '../components/SpotifyLogo';
 
-const EcranDemarrage = ({ navigation }: any) => {
+const EcranDemarrage = () => {
   const animationOpacite = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -20,11 +20,11 @@ const EcranDemarrage = ({ navigation }: any) => {
       }),
       Animated.delay(1000),
     ]).start();
-  }, []);
+  }, [animationOpacite]);
 
   return (
     <View style={styles.conteneur}>
-      <Animated.View style={{ opacity: animationOpacite }}>
+      <Animated.View style={{opacity: animationOpacite}}>
         <View style={styles.conteneurLogo}>
           <SpotifyLogo size={100} />
           <Text style={styles.texteSpotify}>SPOTIFY</Text>

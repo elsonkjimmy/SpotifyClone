@@ -1,7 +1,7 @@
 /**
  * Écran d'inscription (Register) - Version Premium.
  */
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,11 @@ import {
   Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { COLORS, SPACING } from '../theme/colors';
-import { creerCompteUtilisateurAvecEmail } from '../services/auth';
+import {COLORS, SPACING} from '../theme/colors';
+import {creerCompteUtilisateurAvecEmail} from '../services/auth';
 import SpotifyLogo from '../components/SpotifyLogo';
 
-const EcranDInscription = ({ navigation }: any) => {
+const EcranDInscription = ({navigation}: any) => {
   const [emailSaisi, setEmailSaisi] = useState('');
   const [motDePasseSaisi, setMotDePasseSaisi] = useState('');
   const [confirmationMotDePasse, setConfirmationMotDePasse] = useState('');
@@ -36,7 +36,7 @@ const EcranDInscription = ({ navigation }: any) => {
     setEstEnTrainDeCharger(true);
     try {
       await creerCompteUtilisateurAvecEmail(emailSaisi, motDePasseSaisi);
-      // Connecté auto par Firebase
+      navigation.goBack();
     } catch (erreur: any) {
       Alert.alert("Échec de l'inscription", erreur.message);
     } finally {
@@ -46,13 +46,15 @@ const EcranDInscription = ({ navigation }: any) => {
 
   return (
     <View style={styles.conteneurGlobal}>
-      <LinearGradient colors={['#222222', COLORS.black]} style={styles.degrade} />
-      
+      <LinearGradient
+        colors={['#222222', COLORS.black]}
+        style={styles.degrade}
+      />
+
       <SafeAreaView style={styles.zoneContenu}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.clavierVue}
-        >
+          style={styles.clavierVue}>
           <View style={styles.sectionLogo}>
             <SpotifyLogo size={50} />
             <Text style={styles.titrePage}>Créer un compte</Text>
@@ -96,15 +98,21 @@ const EcranDInscription = ({ navigation }: any) => {
             </View>
 
             <TouchableOpacity
-              style={[styles.boutonInscription, estEnTrainDeCharger && { opacity: 0.5 }]}
+              style={[
+                styles.boutonInscription,
+                estEnTrainDeCharger && {opacity: 0.5},
+              ]}
               onPress={gererActionDInscription}
-              disabled={estEnTrainDeCharger}
-            >
+              disabled={estEnTrainDeCharger}>
               <Text style={styles.texteBouton}>CRÉER LE COMPTE</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.boutonRetour} onPress={() => navigation.goBack()}>
-              <Text style={styles.texteRetour}>Déjà un compte ? Se connecter</Text>
+            <TouchableOpacity
+              style={styles.boutonRetour}
+              onPress={() => navigation.goBack()}>
+              <Text style={styles.texteRetour}>
+                Déjà un compte ? Se connecter
+              </Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -114,26 +122,56 @@ const EcranDInscription = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  conteneurGlobal: { flex: 1, backgroundColor: COLORS.black },
-  degrade: { ...StyleSheet.absoluteFillObject },
-  zoneContenu: { flex: 1 },
-  clavierVue: { flex: 1, paddingHorizontal: SPACING.xl, justifyContent: 'center' },
-  sectionLogo: { alignItems: 'center', marginBottom: 40 },
-  titrePage: { color: COLORS.white, fontSize: 24, fontWeight: 'bold', marginTop: 15 },
-  formulaire: { width: '100%' },
-  blocChamp: { marginBottom: 20 },
-  label: { color: COLORS.white, fontSize: 13, fontWeight: 'bold', marginBottom: 8 },
-  input: { backgroundColor: '#333', color: COLORS.white, padding: 15, borderRadius: 4, fontSize: 16 },
-  boutonInscription: { 
-    backgroundColor: COLORS.green, 
-    padding: 16, 
-    borderRadius: 30, 
-    alignItems: 'center', 
-    marginTop: 20 
+  conteneurGlobal: {flex: 1, backgroundColor: COLORS.black},
+  degrade: {...StyleSheet.absoluteFillObject},
+  zoneContenu: {flex: 1},
+  clavierVue: {
+    flex: 1,
+    paddingHorizontal: SPACING.xl,
+    justifyContent: 'center',
   },
-  texteBouton: { color: COLORS.black, fontWeight: 'bold', fontSize: 15, letterSpacing: 1 },
-  boutonRetour: { marginTop: 20, alignItems: 'center' },
-  texteRetour: { color: COLORS.white, fontSize: 13, fontWeight: '500', textDecorationLine: 'underline' },
+  sectionLogo: {alignItems: 'center', marginBottom: 40},
+  titrePage: {
+    color: COLORS.white,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 15,
+  },
+  formulaire: {width: '100%'},
+  blocChamp: {marginBottom: 20},
+  label: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#333',
+    color: COLORS.white,
+    padding: 15,
+    borderRadius: 4,
+    fontSize: 16,
+  },
+  boutonInscription: {
+    backgroundColor: COLORS.green,
+    padding: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  texteBouton: {
+    color: COLORS.black,
+    fontWeight: 'bold',
+    fontSize: 15,
+    letterSpacing: 1,
+  },
+  boutonRetour: {marginTop: 20, alignItems: 'center'},
+  texteRetour: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
 });
 
 export default EcranDInscription;

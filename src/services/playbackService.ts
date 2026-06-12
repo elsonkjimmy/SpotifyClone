@@ -2,7 +2,7 @@
  * Service de lecture en arrière-plan pour react-native-track-player.
  * Gère les événements audio émis par le système (boutons du casque, écran de verrouillage).
  */
-import TrackPlayer, { Event } from 'react-native-track-player';
+import TrackPlayer, {Event} from 'react-native-track-player';
 
 export const ServiceDeLecture = async () => {
   // Événement : Clic sur Play (ex: depuis les contrôles du téléphone)

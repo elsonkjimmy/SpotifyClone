@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
-import { COLORS } from '../theme/colors';
+import {StyleSheet, Text, View} from 'react-native';
+import Svg, {Circle, Path} from 'react-native-svg';
+import {COLORS} from '../theme/colors';
 
 type SpotifyLogoProps = {
   size?: number;
@@ -42,7 +42,7 @@ const SpotifyLogo = ({
       </Svg>
 
       {showWordmark && (
-        <Text style={[styles.wordmark, { color: wordmarkColor }]}>Spotify</Text>
+        <Text style={[styles.wordmark, {color: wordmarkColor}]}>Spotify</Text>
       )}
     </View>
   );

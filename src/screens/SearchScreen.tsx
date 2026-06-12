@@ -1,8 +1,9 @@
 /**
  * Écran de Recherche (Search).
  * Permet à l'utilisateur de trouver des musiques par titre ou artiste.
+ * Style : Glassmorphism premium avec fond en dégradé profond.
  */
-import React, { useState, useEffect } from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   View,
   Text,
@@ -13,79 +14,137 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { Search } from 'lucide-react-native';
-import { COLORS, SPACING } from '../theme/colors';
+import {useFocusEffect} from '@react-navigation/native';
+import {Search} from 'lucide-react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import {COLORS, SPACING} from '../theme/colors';
 import ComposantCarteMusique from '../components/ComposantCarteMusique';
-import { chargerEtJouerUneListeDeMusiques } from '../services/ServiceLecteurAudio';
-import { recupererToutesLesChansons } from '../services/firestore';
+import {chargerEtJouerUneListeDeMusiques} from '../services/ServiceLecteurAudio';
+import {recupererToutesLesChansons} from '../services/firestore';
+import type {Chanson} from '../types';
+import {
+  obtenirModeHorsLigne,
+  estChansonTelechargee,
+} from '../services/ServiceTelechargement';
 
-// Grille de catégories colorées (typique de Spotify)
 const CATEGORIES_RECHERCHE = [
-  { id: '1', nom: 'Podcasts', couleur: '#E13300' },
-  { id: '2', nom: 'Créé pour vous', couleur: '#1E3264' },
-  { id: '3', nom: 'Nouveautés', couleur: '#E8115B' },
-  { id: '4', nom: 'Pop', couleur: '#148A08' },
-  { id: '5', nom: 'Hip-hop', couleur: '#BC462B' },
-  { id: '6', nom: 'Danse/Électro', couleur: '#D84000' },
-  { id: '7', nom: 'Afro', couleur: '#E1118C' },
-  { id: '8', nom: 'Ambiance', couleur: '#503750' },
+  {id: '1', nom: 'Pop', couleur: 'rgba(20, 138, 8, 0.4)', genre: 'Pop'},
+  {id: '2', nom: 'Afro', couleur: 'rgba(225, 17, 140, 0.4)', genre: 'Afro'},
+  {
+    id: '3',
+    nom: 'Hip-hop',
+    couleur: 'rgba(188, 70, 43, 0.4)',
+    genre: 'Hip-hop',
+  },
+  {
+    id: '4',
+    nom: 'Créé pour vous',
+    couleur: 'rgba(30, 50, 100, 0.4)',
+    genre: null,
+  },
+  {id: '5', nom: 'Nouveautés', couleur: 'rgba(232, 17, 91, 0.4)', genre: null},
+  {
+    id: '6',
+    nom: 'Danse/Électro',
+    couleur: 'rgba(216, 64, 0, 0.4)',
+    genre: 'Électro',
+  },
+  {id: '7', nom: 'Ambiance', couleur: 'rgba(80, 55, 80, 0.4)', genre: null},
+  {
+    id: '8',
+    nom: 'Podcasts',
+    couleur: 'rgba(225, 51, 0, 0.4)',
+    genre: 'Podcast',
+  },
 ];
 
 const EcranRecherche = () => {
   const [texteRecherche, setTexteRecherche] = useState('');
-  const [toutesLesMusiques, setToutesLesMusiques] = useState<any[]>([]);
-  const [resultatsFiltres, setResultatsFiltres] = useState<any[]>([]);
+  const [toutesLesMusiques, setToutesLesMusiques] = useState<Chanson[]>([]);
+  const [resultatsFiltres, setResultatsFiltres] = useState<Chanson[]>([]);
   const [estEnTrainDeCharger, setEstEnTrainDeCharger] = useState(true);
+  const [categorieActive, setCategorieActive] = useState<string | null>(null);
 
-  // Charger les musiques depuis Firestore au démarrage
-  useEffect(() => {
-    const chargerMusiques = async () => {
-      try {
-        const resultat = await recupererToutesLesChansons();
-        const musiques = resultat.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setToutesLesMusiques(musiques);
-        setResultatsFiltres(musiques);
-      } catch (erreur) {
-        console.log('Erreur recherche:', erreur);
-        // Fallback local en cas d'erreur Firestore
-        const musiquesDeSecours = [
-          { id: 's1', title: 'Blinding Lights', artist: 'The Weeknd', artwork: 'https://i.scdn.co/image/ab67616d0000b273b3c3c7e3f8476a66a152331a' },
-          { id: 's2', title: 'Starboy', artist: 'The Weeknd', artwork: 'https://i.scdn.co/image/ab67616d0000b2734718e5b124f7979288e1467a' },
-          { id: 's3', title: 'One Dance', artist: 'Drake', artwork: 'https://i.scdn.co/image/ab67616d0000b2739418edfa6d914569485b00c5' }
-        ];
-        setToutesLesMusiques(musiquesDeSecours);
-        setResultatsFiltres(musiquesDeSecours);
-      } finally {
-        setEstEnTrainDeCharger(false);
+  const chargerMusiques = useCallback(async () => {
+    setEstEnTrainDeCharger(true);
+    try {
+      let musiques = await recupererToutesLesChansons();
+      if (obtenirModeHorsLigne()) {
+        musiques = musiques.filter(m => estChansonTelechargee(m.id));
       }
-    };
-    chargerMusiques();
+      setToutesLesMusiques(musiques);
+      setResultatsFiltres(musiques);
+    } catch (erreur) {
+      console.log('Erreur recherche:', erreur);
+    } finally {
+      setEstEnTrainDeCharger(false);
+    }
   }, []);
 
-  // Fonction explicite pour filtrer la liste en fonction de la saisie
+  useFocusEffect(
+    useCallback(() => {
+      chargerMusiques();
+    }, [chargerMusiques]),
+  );
+
   const filtrerLesMusiquesSelonLaSaisie = (texte: string) => {
     setTexteRecherche(texte);
-    
+    setCategorieActive(null);
+
     if (texte.trim() === '') {
       setResultatsFiltres(toutesLesMusiques);
       return;
     }
 
-    const musiquesTrouvees = toutesLesMusiques.filter((musique) => {
-      const titreCorrespond = musique.title.toLowerCase().includes(texte.toLowerCase());
-      const artisteCorrespond = musique.artist.toLowerCase().includes(texte.toLowerCase());
+    const musiquesTrouvees = toutesLesMusiques.filter(musique => {
+      const titreCorrespond = musique.title
+        .toLowerCase()
+        .includes(texte.toLowerCase());
+      const artisteCorrespond = musique.artist
+        .toLowerCase()
+        .includes(texte.toLowerCase());
       return titreCorrespond || artisteCorrespond;
     });
 
     setResultatsFiltres(musiquesTrouvees);
   };
 
-  // Composant pour chaque carré de catégorie
-  const RenduCarteCategorie = ({ item }: any) => (
-    <TouchableOpacity style={[styles.carteCategorie, { backgroundColor: item.couleur }]}>
+  const filtrerParCategorie = (nom: string, genre: string | null) => {
+    setCategorieActive(nom);
+    setTexteRecherche(nom);
+
+    if (!genre) {
+      setResultatsFiltres(toutesLesMusiques);
+      return;
+    }
+
+    setResultatsFiltres(
+      toutesLesMusiques.filter(
+        m => m.genre?.toLowerCase() === genre.toLowerCase(),
+      ),
+    );
+  };
+
+  const jouerMusique = async (item: Chanson) => {
+    await chargerEtJouerUneListeDeMusiques(
+      [item, ...toutesLesMusiques.filter(m => m.id !== item.id)],
+      0,
+      'Recherche',
+    );
+  };
+
+  const renderCarteCategorie = ({
+    item,
+  }: {
+    item: (typeof CATEGORIES_RECHERCHE)[0];
+  }) => (
+    <TouchableOpacity
+      style={[
+        styles.carteCategorie,
+        {backgroundColor: item.couleur},
+        categorieActive === item.nom && styles.carteCategorieActive,
+      ]}
+      onPress={() => filtrerParCategorie(item.nom, item.genre)}>
       <Text style={styles.texteCategorie}>{item.nom}</Text>
     </TouchableOpacity>
   );
@@ -98,73 +157,77 @@ const EcranRecherche = () => {
     );
   }
 
-  return (
-    <SafeAreaView style={styles.conteneurPrincipal}>
-      <View style={styles.entete}>
-        <Text style={styles.titrePage}>Recherche</Text>
-        
-        {/* Barre de recherche stylisée Spotify */}
-        <View style={styles.conteneurBarreSaisie}>
-          <Search color={COLORS.black} size={22} style={styles.iconeLoupe} />
-          <TextInput
-            style={styles.champSaisie}
-            placeholder="Que souhaitez-vous écouter ?"
-            placeholderTextColor="#535353"
-            value={texteRecherche}
-            onChangeText={filtrerLesMusiquesSelonLaSaisie}
-          />
-        </View>
-      </View>
+  const afficherCategories = texteRecherche.trim() === '' && !categorieActive;
 
-      {/* Si l'utilisateur n'a rien tapé, on montre les catégories */}
-      {texteRecherche.trim() === '' ? (
-        <View style={{ flex: 1 }}>
-          <Text style={styles.sousTitreSection}>Parcourir tout</Text>
-          <FlatList
-            data={CATEGORIES_RECHERCHE}
-            numColumns={2}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <RenduCarteCategorie item={item} />}
-            contentContainerStyle={styles.grilleCategories}
-          />
-        </View>
-      ) : (
-        /* Sinon on montre les résultats de recherche */
-        <FlatList
-          data={resultatsFiltres}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.listeResultats}
-          columnWrapperStyle={styles.ligneGrille}
-          renderItem={({ item }) => (
-            <ComposantCarteMusique
-              titre={item.title}
-              artiste={item.artist}
-              urlImage={item.artwork}
-              actionAuClic={() => chargerEtJouerUneListeDeMusiques([item])}
+  return (
+    <View style={styles.conteneurPrincipal}>
+      <LinearGradient
+        colors={['#061a29', '#030c14', COLORS.black]}
+        style={styles.degradeFond}
+      />
+      <SafeAreaView style={styles.zoneSafe}>
+        <View style={styles.entete}>
+          <Text style={styles.titrePage}>Recherche</Text>
+          <View style={styles.conteneurBarreSaisie}>
+            <Search
+              color="rgba(255, 255, 255, 0.6)"
+              size={22}
+              style={styles.iconeLoupe}
             />
-          )}
-          ListEmptyComponent={
-            <Text style={styles.texteAucunResultat}>Aucune musique trouvée pour "{texteRecherche}"</Text>
-          }
-        />
-      )}
-    </SafeAreaView>
+            <TextInput
+              style={styles.champSaisie}
+              placeholder="Que souhaitez-vous écouter ?"
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              value={texteRecherche}
+              onChangeText={filtrerLesMusiquesSelonLaSaisie}
+            />
+          </View>
+        </View>
+
+        {afficherCategories ? (
+          <View style={styles.zoneCategories}>
+            <Text style={styles.sousTitreSection}>Parcourir tout</Text>
+            <FlatList
+              data={CATEGORIES_RECHERCHE}
+              numColumns={2}
+              keyExtractor={item => item.id}
+              renderItem={renderCarteCategorie}
+              contentContainerStyle={styles.grilleCategories}
+            />
+          </View>
+        ) : (
+          <FlatList
+            data={resultatsFiltres}
+            keyExtractor={item => item.id}
+            numColumns={2}
+            contentContainerStyle={styles.listeResultats}
+            columnWrapperStyle={styles.ligneGrille}
+            renderItem={({item}) => (
+              <ComposantCarteMusique
+                titre={item.title}
+                artiste={item.artist}
+                urlImage={item.artwork}
+                actionAuClic={() => jouerMusique(item)}
+              />
+            )}
+            ListEmptyComponent={
+              <Text style={styles.texteAucunResultat}>
+                Aucune musique trouvée pour "{texteRecherche}"
+              </Text>
+            }
+          />
+        )}
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  conteneurPrincipal: {
-    flex: 1,
-    backgroundColor: COLORS.black,
-  },
-  centrerContenu: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  entete: {
-    padding: SPACING.m,
-  },
+  conteneurPrincipal: {flex: 1, backgroundColor: COLORS.black},
+  zoneSafe: {flex: 1},
+  degradeFond: {...StyleSheet.absoluteFillObject},
+  centrerContenu: {justifyContent: 'center', alignItems: 'center'},
+  entete: {padding: SPACING.m},
   titrePage: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -172,22 +235,18 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.m,
   },
   conteneurBarreSaisie: {
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Barre translucide
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     paddingHorizontal: SPACING.s,
     height: 48,
   },
-  iconeLoupe: {
-    marginRight: SPACING.s,
-  },
-  champSaisie: {
-    flex: 1,
-    color: COLORS.black,
-    fontSize: 15,
-    fontWeight: '700',
-  },
+  iconeLoupe: {marginRight: SPACING.s},
+  champSaisie: {flex: 1, color: COLORS.white, fontSize: 15, fontWeight: '600'},
+  zoneCategories: {flex: 1},
   sousTitreSection: {
     color: COLORS.white,
     fontSize: 16,
@@ -196,28 +255,26 @@ const styles = StyleSheet.create({
     marginTop: SPACING.s,
     marginBottom: SPACING.m,
   },
-  grilleCategories: {
-    paddingHorizontal: SPACING.m - 8,
-  },
+  grilleCategories: {paddingHorizontal: SPACING.m - 8},
   carteCategorie: {
     flex: 1,
     height: 100,
-    borderRadius: 5,
+    borderRadius: 12,
     margin: 8,
     padding: SPACING.m,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)', // Effet vitré
+    // Ombre délicate
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  texteCategorie: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  listeResultats: {
-    paddingHorizontal: SPACING.m,
-    paddingBottom: 100,
-  },
-  ligneGrille: {
-    justifyContent: 'space-between',
-  },
+  carteCategorieActive: {borderWidth: 2, borderColor: COLORS.white},
+  texteCategorie: {color: COLORS.white, fontSize: 16, fontWeight: 'bold'},
+  listeResultats: {paddingHorizontal: SPACING.m, paddingBottom: 100},
+  ligneGrille: {justifyContent: 'space-between'},
   texteAucunResultat: {
     color: COLORS.white,
     textAlign: 'center',

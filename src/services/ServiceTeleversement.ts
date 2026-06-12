@@ -4,10 +4,13 @@
  */
 
 // Remplacez ces valeurs par vos identifiants Cloudinary (disponibles sur votre dashboard Cloudinary)
-const NOM_DU_CLOUD = 'dtnyukyzy'; 
+const NOM_DU_CLOUD = 'dtnyukyzy';
 const UPLOAD_PRESET = 'spotify_televersement'; // Doit être configuré en "Unsigned" sur Cloudinary
 
-export const televerserVersCloudinary = async (cheminDuFichier: string, typeDeFichier: 'image' | 'video') => {
+export const televerserVersCloudinary = async (
+  cheminDuFichier: string,
+  typeDeFichier: 'image' | 'video',
+) => {
   const urlCloudinary = `https://api.cloudinary.com/v1_1/${NOM_DU_CLOUD}/${typeDeFichier}/upload`;
 
   const donnees = new FormData();
@@ -28,7 +31,7 @@ export const televerserVersCloudinary = async (cheminDuFichier: string, typeDeFi
     });
 
     const resultat = await reponse.json();
-    
+
     if (resultat.secure_url) {
       return resultat.secure_url; // C'est l'URL finale que nous enregistrerons dans Firestore
     } else {

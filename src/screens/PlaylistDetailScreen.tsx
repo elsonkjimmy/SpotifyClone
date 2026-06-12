@@ -1,8 +1,9 @@
 /**
  * Écran Détail de Playlist.
- * Affiche la liste des morceaux d'une playlist spécifique.
+ * Affiche la liste des morceaux d'une playlist depuis Firestore.
+ * Style : Glassmorphism premium avec fond en dégradé indigo profond.
  */
-import React from 'react';
+import React, {useCallback, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -11,73 +12,291 @@ import {
   FlatList,
   TouchableOpacity,
   SafeAreaView,
+  ActivityIndicator,
+  Alert,
+  Animated,
 } from 'react-native';
-import { ChevronLeft, Play, MoreVertical } from 'lucide-react-native';
+import {useFocusEffect} from '@react-navigation/native';
+import {
+  ChevronLeft,
+  Play,
+  MoreVertical,
+  Trash2,
+  Edit3,
+} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { COLORS, SPACING } from '../theme/colors';
-import { chargerEtJouerUneListeDeMusiques } from '../services/ServiceLecteurAudio';
+import {COLORS, SPACING} from '../theme/colors';
+import {chargerEtJouerUneListeDeMusiques} from '../services/ServiceLecteurAudio';
+import {
+  recupererChansonsParIds,
+  recupererFavorisUtilisateur,
+  supprimerMusiqueDeFirestore,
+} from '../services/firestore';
+import type {Chanson, Playlist} from '../types';
+import {useAuth} from '../context/AuthContext';
+import ModalAjouterAPlaylist from '../components/ModalAjouterAPlaylist';
+import ModalModifierMusique from '../components/ModalModifierMusique';
 
-const EcranDetailPlaylist = ({ route, navigation }: any) => {
-  const { playlist } = route.params;
+// ─── Sous-composant : Ligne Musique Animée avec Effet de Rebond ───
+const LigneMusiqueAnimee = ({
+  item,
+  index,
+  musiques,
+  playlistNom,
+  estAdmin,
+  surEditer,
+  surSupprimer,
+  surAjouterAPlaylist,
+}: {
+  item: Chanson;
+  index: number;
+  musiques: Chanson[];
+  playlistNom: string;
+  estAdmin: boolean;
+  surEditer: () => void;
+  surSupprimer: () => void;
+  surAjouterAPlaylist: () => void;
+}) => {
+  const valeurEchelle = useRef(new Animated.Value(1)).current;
 
-  // On simule une liste de musiques pour la démonstration
-  const MUSIQUES_DE_LA_PLAYLIST = [
-    { id: 'p1', title: 'Song One', artist: playlist.nom, artwork: playlist.image || 'https://picsum.photos/200', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-    { id: 'p2', title: 'Song Two', artist: playlist.nom, artwork: playlist.image || 'https://picsum.photos/201', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-    { id: 'p3', title: 'Song Three', artist: playlist.nom, artwork: playlist.image || 'https://picsum.photos/202', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-  ];
+  const gererAppui = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(valeurEchelle, {
+        toValue: 0.96,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+      Animated.spring(valeurEchelle, {
+        toValue: 1.0,
+        friction: 4,
+        tension: 140,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    chargerEtJouerUneListeDeMusiques(musiques, index, playlistNom);
+  }, [musiques, index, playlistNom, valeurEchelle]);
 
-  const RenduLigneMusique = ({ item }: any) => (
-    <TouchableOpacity 
-      style={styles.ligneMusique}
-      onPress={() => chargerEtJouerUneListeDeMusiques([item])}
-    >
-      <View style={styles.blocTexte}>
-        <Text style={styles.titreMusique}>{item.title}</Text>
-        <Text style={styles.artisteMusique}>{item.artist}</Text>
-      </View>
-      <MoreVertical color={COLORS.lightGray} size={20} />
-    </TouchableOpacity>
+  return (
+    <Animated.View
+      style={[
+        styles.conteneurLigneMusiqueAnim,
+        {transform: [{scale: valeurEchelle}]},
+      ]}>
+      <TouchableOpacity
+        style={styles.ligneMusique}
+        onPress={gererAppui}
+        activeOpacity={0.85}>
+        <View style={styles.blocTexte}>
+          <Text style={styles.titreMusique}>{item.title}</Text>
+          <Text style={styles.artisteMusique}>{item.artist}</Text>
+        </View>
+        <View style={styles.iconesActions}>
+          {estAdmin && (
+            <>
+              <TouchableOpacity
+                onPress={surEditer}
+                style={styles.boutonActionLigne}>
+                <Edit3 color={COLORS.green} size={18} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={surSupprimer}
+                style={styles.boutonActionLigne}>
+                <Trash2 color="#FF4444" size={18} />
+              </TouchableOpacity>
+            </>
+          )}
+          <TouchableOpacity onPress={surAjouterAPlaylist}>
+            <MoreVertical color={COLORS.lightGray} size={20} />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+const EcranDetailPlaylist = ({route, navigation}: any) => {
+  const {playlist}: {playlist: Playlist} = route.params;
+  const {utilisateur, estAdmin} = useAuth();
+  const [musiques, setMusiques] = useState<Chanson[]>([]);
+  const [estEnTrainDeCharger, setEstEnTrainDeCharger] = useState(true);
+  /** Chanson sélectionnée pour le modal d'ajout à une playlist */
+  const [chansonSelectionnee, setChansonSelectionnee] =
+    useState<Chanson | null>(null);
+  const [modalPlaylistVisible, setModalPlaylistVisible] = useState(false);
+  const [chansonAEditer, setChansonAEditer] = useState<Chanson | null>(null);
+  const [modalEditionVisible, setModalEditionVisible] = useState(false);
+
+  const gererSuppressionMusique = (chansonId: string) => {
+    Alert.alert(
+      'Supprimer du serveur 🚨',
+      'Êtes-vous sûr de vouloir supprimer définitivement cette musique du catalogue ?',
+      [
+        {text: 'Annuler', style: 'cancel'},
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            await supprimerMusiqueDeFirestore(chansonId);
+            chargerMusiques();
+          },
+        },
+      ],
+    );
+  };
+
+  const chargerMusiques = useCallback(async () => {
+    setEstEnTrainDeCharger(true);
+    try {
+      let idsAVol = playlist.songIds ?? [];
+      if (playlist.estSpeciale && utilisateur) {
+        idsAVol = await recupererFavorisUtilisateur(utilisateur.uid);
+      }
+      const chansons = await recupererChansonsParIds(idsAVol);
+      setMusiques(chansons);
+    } catch (erreur) {
+      console.log('Erreur détail playlist:', erreur);
+    } finally {
+      setEstEnTrainDeCharger(false);
+    }
+  }, [playlist.songIds, playlist.estSpeciale, utilisateur]);
+
+  useFocusEffect(
+    useCallback(() => {
+      chargerMusiques();
+    }, [chargerMusiques]),
+  );
+
+  const renderLigneMusique = ({
+    item,
+    index,
+  }: {
+    item: Chanson;
+    index: number;
+  }) => (
+    <LigneMusiqueAnimee
+      item={item}
+      index={index}
+      musiques={musiques}
+      playlistNom={playlist.nom}
+      estAdmin={estAdmin}
+      surEditer={() => {
+        setChansonAEditer(item);
+        setModalEditionVisible(true);
+      }}
+      surSupprimer={() => gererSuppressionMusique(item.id)}
+      surAjouterAPlaylist={() => {
+        setChansonSelectionnee(item);
+        setModalPlaylistVisible(true);
+      }}
+    />
   );
 
   return (
     <View style={styles.conteneur}>
-      <LinearGradient colors={['#555555', COLORS.black]} style={styles.degrade} />
-      
-      <SafeAreaView style={{ flex: 1 }}>
-        <TouchableOpacity style={styles.boutonRetour} onPress={() => navigation.goBack()}>
+      <LinearGradient
+        colors={['rgba(40, 20, 95, 0.95)', '#140c26', COLORS.black]}
+        style={styles.degrade}
+      />
+
+      <SafeAreaView style={styles.zoneSafe}>
+        <TouchableOpacity
+          style={styles.boutonRetour}
+          onPress={() => navigation.goBack()}>
           <ChevronLeft color={COLORS.white} size={30} />
         </TouchableOpacity>
 
         <View style={styles.entete}>
-          <Image source={{ uri: playlist.image || 'https://picsum.photos/300' }} style={styles.imageGrande} />
+          {playlist.estSpeciale ? (
+            <View style={styles.imageSpeciale}>
+              <Text style={styles.emojiLike}>♥</Text>
+            </View>
+          ) : (
+            <Image
+              source={{uri: playlist.image || 'https://picsum.photos/300'}}
+              style={styles.imageGrande}
+            />
+          )}
           <Text style={styles.titrePlaylist}>{playlist.nom}</Text>
           <Text style={styles.createur}>{playlist.createur}</Text>
-          
-          <TouchableOpacity style={styles.boutonPlay} onPress={() => chargerEtJouerUneListeDeMusiques(MUSIQUES_DE_LA_PLAYLIST)}>
+
+          <TouchableOpacity
+            style={[
+              styles.boutonPlay,
+              musiques.length === 0 && styles.boutonPlayDesactive,
+            ]}
+            disabled={musiques.length === 0}
+            onPress={() =>
+              chargerEtJouerUneListeDeMusiques(musiques, 0, playlist.nom)
+            }>
             <Play color={COLORS.black} size={30} fill={COLORS.black} />
           </TouchableOpacity>
         </View>
 
-        <FlatList
-          data={MUSIQUES_DE_LA_PLAYLIST}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <RenduLigneMusique item={item} />}
-          contentContainerStyle={styles.liste}
-        />
+        {estEnTrainDeCharger ? (
+          <ActivityIndicator color={COLORS.green} style={styles.chargement} />
+        ) : (
+          <FlatList
+            data={musiques}
+            keyExtractor={item => item.id}
+            renderItem={renderLigneMusique}
+            contentContainerStyle={styles.liste}
+            ListEmptyComponent={
+              <Text style={styles.texteVide}>Cette playlist est vide.</Text>
+            }
+          />
+        )}
       </SafeAreaView>
+
+      {/* Modal d'ajout à une playlist */}
+      {chansonSelectionnee && (
+        <ModalAjouterAPlaylist
+          visible={modalPlaylistVisible}
+          chanson={chansonSelectionnee}
+          onFermer={() => {
+            setModalPlaylistVisible(false);
+            setChansonSelectionnee(null);
+          }}
+          onCreerPlaylist={() => navigation.navigate('CreatePlaylist')}
+        />
+      )}
+
+      {/* Modal d'édition des infos (Admin uniquement) */}
+      <ModalModifierMusique
+        visible={modalEditionVisible}
+        chanson={chansonAEditer}
+        onFermer={() => {
+          setModalEditionVisible(false);
+          setChansonAEditer(null);
+        }}
+        onModifier={chargerMusiques}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  conteneur: { flex: 1, backgroundColor: COLORS.black },
-  degrade: { ...StyleSheet.absoluteFillObject, height: 400 },
-  boutonRetour: { padding: SPACING.m },
-  entete: { alignItems: 'center', marginBottom: 20 },
-  imageGrande: { width: 200, height: 200, borderRadius: 4, elevation: 10 },
-  titrePlaylist: { color: COLORS.white, fontSize: 24, fontWeight: 'bold', marginTop: 20 },
-  createur: { color: COLORS.lightGray, fontSize: 14, marginTop: 5 },
+  conteneur: {flex: 1, backgroundColor: COLORS.black},
+  zoneSafe: {flex: 1},
+  degrade: {...StyleSheet.absoluteFillObject, height: 400},
+  boutonRetour: {padding: SPACING.m},
+  entete: {alignItems: 'center', marginBottom: 20},
+  imageGrande: {width: 200, height: 200, borderRadius: 12, elevation: 10},
+  imageSpeciale: {
+    width: 200,
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#450af5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emojiLike: {fontSize: 64, color: COLORS.white},
+  titrePlaylist: {
+    color: COLORS.white,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 20,
+  },
+  createur: {color: COLORS.lightGray, fontSize: 14, marginTop: 5},
   boutonPlay: {
     backgroundColor: COLORS.green,
     width: 60,
@@ -88,11 +307,28 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignSelf: 'center',
   },
-  liste: { paddingHorizontal: SPACING.m, paddingBottom: 100 },
-  ligneMusique: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
-  blocTexte: { flex: 1 },
-  titreMusique: { color: COLORS.white, fontSize: 16, fontWeight: '500' },
-  artisteMusique: { color: COLORS.lightGray, fontSize: 13, marginTop: 2 },
+  boutonPlayDesactive: {opacity: 0.4},
+  liste: {paddingHorizontal: SPACING.m, paddingBottom: 100},
+  ligneMusique: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  blocTexte: {flex: 1},
+  titreMusique: {color: COLORS.white, fontSize: 16, fontWeight: '500'},
+  artisteMusique: {color: COLORS.lightGray, fontSize: 13, marginTop: 2},
+  chargement: {marginTop: 30},
+  texteVide: {color: COLORS.lightGray, textAlign: 'center', marginTop: 30},
+  iconesActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  boutonActionLigne: {
+    marginRight: 15,
+  },
+  conteneurLigneMusiqueAnim: {
+    width: '100%',
+  },
 });
 
 export default EcranDetailPlaylist;

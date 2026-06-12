@@ -2,7 +2,7 @@
  * Écran de téléversement (Upload).
  * Réservé à l'administrateur pour ajouter des musiques sur la plateforme.
  */
-import React, { useState, useEffect } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -15,31 +15,27 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
-import { launchImageLibrary } from 'react-native-image-picker';
-import { Music, Image as ImageIcon, LogIn } from 'lucide-react-native';
-import auth from '@react-native-firebase/auth';
-import { COLORS, SPACING } from '../theme/colors';
+import {launchImageLibrary} from 'react-native-image-picker';
+import {
+  Music,
+  Image as ImageIcon,
+  LogIn,
+  ShieldAlert,
+} from 'lucide-react-native';
+import {COLORS, SPACING} from '../theme/colors';
 import SpotifyLogo from '../components/SpotifyLogo';
-import { surveillerChangementEtatAuthentification } from '../services/auth';
-import { televerserVersCloudinary } from '../services/ServiceTeleversement';
-import { enregistrerNouvelleMusiqueDansFirestore } from '../services/firestore';
+import {useAuth} from '../context/AuthContext';
+import {televerserVersCloudinary} from '../services/ServiceTeleversement';
+import {enregistrerNouvelleMusiqueDansFirestore} from '../services/firestore';
 
-const EcranAjouterMusique = ({ navigation }: any) => {
-  const [utilisateurActuel, setUtilisateurActuel] = useState<any>(auth().currentUser);
-
-  useEffect(() => {
-    const desabonner = surveillerChangementEtatAuthentification((utilisateur) => {
-      setUtilisateurActuel(utilisateur);
-    });
-    return desabonner;
-  }, []);
+const EcranAjouterMusique = ({navigation}: any) => {
+  const {utilisateur, estAdmin} = useAuth();
   const [titreSaisi, setTitreSaisi] = useState('');
   const [artisteSaisi, setArtisteSaisi] = useState('');
   const [fichierAudio, setFichierAudio] = useState<any>(null);
   const [fichierImage, setFichierImage] = useState<any>(null);
   const [estEnTrainDeTeleverser, setEstEnTrainDeTeleverser] = useState(false);
 
-  // Fonction pour choisir un fichier MP3 sur le téléphone
   const choisirUnFichierAudio = async () => {
     try {
       const resultat = await DocumentPicker.pickSingle({
@@ -53,56 +49,91 @@ const EcranAjouterMusique = ({ navigation }: any) => {
     }
   };
 
-  // Fonction pour choisir une image de couverture
   const choisirUneImagePochette = async () => {
-    const resultat = await launchImageLibrary({ mediaType: 'photo' });
+    const resultat = await launchImageLibrary({mediaType: 'photo'});
     if (resultat.assets && resultat.assets.length > 0) {
       setFichierImage(resultat.assets[0]);
     }
   };
 
-  // Action finale : Envoyer vers Cloudinary puis vers Firestore
   const demarrerLeTeleversementFinal = async () => {
     if (!titreSaisi || !artisteSaisi || !fichierAudio || !fichierImage) {
-      Alert.alert('Champs incomplets', 'Veuillez remplir toutes les informations et choisir les fichiers.');
+      Alert.alert(
+        'Champs incomplets',
+        'Veuillez remplir toutes les informations et choisir les fichiers.',
+      );
       return;
     }
 
     setEstEnTrainDeTeleverser(true);
     try {
-      // 1. Envoyer l'image sur Cloudinary
-      const urlImageFinale = await televerserVersCloudinary(fichierImage.uri, 'image');
-      
-      // 2. Envoyer le MP3 sur Cloudinary (On utilise 'video' car Cloudinary traite l'audio dans cette catégorie)
-      const urlAudioFinale = await televerserVersCloudinary(fichierAudio.uri, 'video');
+      const urlImageFinale = await televerserVersCloudinary(
+        fichierImage.uri,
+        'image',
+      );
+      const urlAudioFinale = await televerserVersCloudinary(
+        fichierAudio.uri,
+        'video',
+      );
+      await enregistrerNouvelleMusiqueDansFirestore(
+        titreSaisi,
+        artisteSaisi,
+        urlAudioFinale,
+        urlImageFinale,
+      );
 
-      // 3. Enregistrer les liens dans Firestore
-      await enregistrerNouvelleMusiqueDansFirestore(titreSaisi, artisteSaisi, urlAudioFinale, urlImageFinale);
-
-      Alert.alert('Succès !', 'La musique a été ajoutée avec succès sur Spotify Clone.');
+      Alert.alert(
+        'Succès !',
+        'La musique a été ajoutée avec succès sur Spotify Clone.',
+      );
       navigation.goBack();
     } catch (erreur) {
-      Alert.alert('Erreur', 'Une erreur est survenue pendant le téléversement.');
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue pendant le téléversement.',
+      );
     } finally {
       setEstEnTrainDeTeleverser(false);
     }
   };
 
-  if (!utilisateurActuel) {
+  if (!utilisateur) {
     return (
       <SafeAreaView style={styles.conteneurPrincipal}>
         <View style={styles.zoneProtegee}>
           <SpotifyLogo size={72} />
           <Text style={styles.titreVerrouille}>Connexion requise</Text>
           <Text style={styles.texteVerrouille}>
-            L&apos;ajout de musique est reserve aux utilisateurs connectes.
+            L&apos;ajout de musique est réservé aux utilisateurs connectés.
           </Text>
-
-          <TouchableOpacity style={styles.boutonPublier} onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity
+            style={styles.boutonPublier}
+            onPress={() => navigation.navigate('Login')}>
             <View style={styles.contenuBoutonConnexion}>
               <LogIn color={COLORS.black} size={18} />
-              <Text style={styles.texteBoutonConnexionProtege}>SE CONNECTER</Text>
+              <Text style={styles.texteBoutonConnexionProtege}>
+                SE CONNECTER
+              </Text>
             </View>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!estAdmin) {
+    return (
+      <SafeAreaView style={styles.conteneurPrincipal}>
+        <View style={styles.zoneProtegee}>
+          <ShieldAlert color={COLORS.green} size={64} />
+          <Text style={styles.titreVerrouille}>Accès administrateur</Text>
+          <Text style={styles.texteVerrouille}>
+            Seul le compte admin@ict.com peut ajouter des musiques.
+          </Text>
+          <TouchableOpacity
+            style={styles.boutonRetour}
+            onPress={() => navigation.goBack()}>
+            <Text style={styles.texteRetour}>Retour</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -133,27 +164,42 @@ const EcranAjouterMusique = ({ navigation }: any) => {
           placeholderTextColor={COLORS.lightGray}
         />
 
-        {/* Bouton pour l'audio */}
-        <TouchableOpacity style={styles.boutonSelection} onPress={choisirUnFichierAudio}>
+        <TouchableOpacity
+          style={styles.boutonSelection}
+          onPress={choisirUnFichierAudio}>
           <Music color={fichierAudio ? COLORS.green : COLORS.white} size={24} />
-          <Text style={[styles.texteBouton, fichierAudio && { color: COLORS.green }]}>
+          <Text
+            style={[
+              styles.texteBouton,
+              fichierAudio && styles.texteBoutonActif,
+            ]}>
             {fichierAudio ? 'Audio sélectionné' : 'Choisir le fichier MP3'}
           </Text>
         </TouchableOpacity>
 
-        {/* Bouton pour l'image */}
-        <TouchableOpacity style={styles.boutonSelection} onPress={choisirUneImagePochette}>
-          <ImageIcon color={fichierImage ? COLORS.green : COLORS.white} size={24} />
-          <Text style={[styles.texteBouton, fichierImage && { color: COLORS.green }]}>
+        <TouchableOpacity
+          style={styles.boutonSelection}
+          onPress={choisirUneImagePochette}>
+          <ImageIcon
+            color={fichierImage ? COLORS.green : COLORS.white}
+            size={24}
+          />
+          <Text
+            style={[
+              styles.texteBouton,
+              fichierImage && styles.texteBoutonActif,
+            ]}>
             {fichierImage ? 'Image sélectionnée' : 'Choisir la pochette'}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.boutonPublier, estEnTrainDeTeleverser && { backgroundColor: '#555' }]} 
+        <TouchableOpacity
+          style={[
+            styles.boutonPublier,
+            estEnTrainDeTeleverser && styles.boutonPublierDesactive,
+          ]}
           onPress={demarrerLeTeleversementFinal}
-          disabled={estEnTrainDeTeleverser}
-        >
+          disabled={estEnTrainDeTeleverser}>
           {estEnTrainDeTeleverser ? (
             <ActivityIndicator color={COLORS.black} />
           ) : (
@@ -166,13 +212,8 @@ const EcranAjouterMusique = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  conteneurPrincipal: {
-    flex: 1,
-    backgroundColor: COLORS.black,
-  },
-  conteneurFormulaire: {
-    padding: SPACING.l,
-  },
+  conteneurPrincipal: {flex: 1, backgroundColor: COLORS.black},
+  conteneurFormulaire: {padding: SPACING.l},
   zoneProtegee: {
     flex: 1,
     alignItems: 'center',
@@ -223,11 +264,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.m,
     borderStyle: 'dashed',
   },
-  texteBouton: {
-    color: COLORS.white,
-    marginLeft: SPACING.m,
-    fontSize: 14,
-  },
+  texteBouton: {color: COLORS.white, marginLeft: SPACING.m, fontSize: 14},
+  texteBoutonActif: {color: COLORS.green},
   boutonPublier: {
     backgroundColor: COLORS.green,
     padding: SPACING.l,
@@ -235,16 +273,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 30,
   },
+  boutonPublierDesactive: {backgroundColor: '#555'},
   texteBoutonPublier: {
     color: COLORS.black,
     fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 1,
   },
-  contenuBoutonConnexion: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  contenuBoutonConnexion: {flexDirection: 'row', alignItems: 'center'},
   texteBoutonConnexionProtege: {
     color: COLORS.black,
     fontWeight: 'bold',
@@ -252,6 +288,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginLeft: SPACING.s,
   },
+  boutonRetour: {padding: SPACING.m},
+  texteRetour: {color: COLORS.white, fontSize: 16, fontWeight: '600'},
 });
 
 export default EcranAjouterMusique;

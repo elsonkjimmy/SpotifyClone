@@ -2,11 +2,11 @@
  * Ce fichier gère la navigation principale de l'application.
  * Il permet d'accéder à l'application sans forcément se connecter.
  */
-import React, { useState, useEffect } from 'react';
-import { View } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Home, Search, Library, User } from 'lucide-react-native';
+import React, {useState, useEffect} from 'react';
+import {View, StyleSheet} from 'react-native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {Home, Search, Library, User} from 'lucide-react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import EcranRecherche from '../screens/SearchScreen';
@@ -17,19 +17,33 @@ import EcranDInscription from '../screens/RegisterScreen';
 import EcranLecteurPleinEcran from '../screens/PlayerScreen';
 import EcranAjouterMusique from '../screens/AddMusicScreen';
 import EcranDetailPlaylist from '../screens/PlaylistDetailScreen';
+import EcranCreerPlaylist from '../screens/CreatePlaylistScreen';
 import EcranDemarrage from '../screens/SplashScreen';
+import EcranFileAttente from '../screens/QueueScreen';
 
 import MiniLecteurAudio from '../components/MiniLecteurAudio';
-import { COLORS } from '../theme/colors';
-import { surveillerChangementEtatAuthentification } from '../services/auth';
+import {COLORS} from '../theme/colors';
+import {useAuth} from '../context/AuthContext';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Le navigateur par onglets avec 4 écrans désormais
+const IconeAccueil = ({color, size}: {color: string; size: number}) => (
+  <Home color={color} size={size} />
+);
+const IconeRecherche = ({color, size}: {color: string; size: number}) => (
+  <Search color={color} size={size} />
+);
+const IconeBibliotheque = ({color, size}: {color: string; size: number}) => (
+  <Library color={color} size={size} />
+);
+const IconeCompte = ({color, size}: {color: string; size: number}) => (
+  <User color={color} size={size} />
+);
+
 const NavigateurParOnglets = () => {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.conteneurOnglets}>
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
@@ -41,14 +55,13 @@ const NavigateurParOnglets = () => {
           },
           tabBarActiveTintColor: COLORS.green,
           tabBarInactiveTintColor: COLORS.lightGray,
-        }}
-      >
+        }}>
         <Tab.Screen
           name="Home"
           component={HomeScreen}
           options={{
             tabBarLabel: 'Accueil',
-            tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+            tabBarIcon: IconeAccueil,
           }}
         />
         <Tab.Screen
@@ -56,7 +69,7 @@ const NavigateurParOnglets = () => {
           component={EcranRecherche}
           options={{
             tabBarLabel: 'Recherche',
-            tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
+            tabBarIcon: IconeRecherche,
           }}
         />
         <Tab.Screen
@@ -64,7 +77,7 @@ const NavigateurParOnglets = () => {
           component={EcranMaBibliotheque}
           options={{
             tabBarLabel: 'Bibliothèque',
-            tabBarIcon: ({ color, size }) => <Library color={color} size={size} />,
+            tabBarIcon: IconeBibliotheque,
           }}
         />
         <Tab.Screen
@@ -72,7 +85,7 @@ const NavigateurParOnglets = () => {
           component={EcranMonCompte}
           options={{
             tabBarLabel: 'Compte',
-            tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+            tabBarIcon: IconeCompte,
           }}
         />
       </Tab.Navigator>
@@ -82,36 +95,54 @@ const NavigateurParOnglets = () => {
 };
 
 const AppNavigator = () => {
-  const [utilisateurConnecte, setUtilisateurConnecte] = useState<any>(null);
-  const [estEnTrainDInitialiser, setEstEnTrainDInitialiser] = useState(true);
+  const {chargement} = useAuth();
+  const [afficherSplash, setAfficherSplash] = useState(true);
 
   useEffect(() => {
-    const desabonner = surveillerChangementEtatAuthentification((etatUtilisateur) => {
-      setUtilisateurConnecte(etatUtilisateur);
-      
-      // Delai Splash Screen
-      setTimeout(() => {
-        setEstEnTrainDInitialiser(false);
-      }, 2000);
-    });
-    return desabonner;
-  }, []);
+    if (!chargement) {
+      const timer = setTimeout(() => setAfficherSplash(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [chargement]);
 
-  if (estEnTrainDInitialiser) return <EcranDemarrage />;
+  if (chargement || afficherSplash) {
+    return <EcranDemarrage />;
+  }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* On peut maintenant entrer dans l'app sans login */}
+    <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="Main" component={NavigateurParOnglets} />
-      
-      {/* Écrans additionnels accessibles depuis la stack */}
-      <Stack.Screen name="Player" component={EcranLecteurPleinEcran} options={{ presentation: 'modal' }} />
-      <Stack.Screen name="AddMusic" component={EcranAjouterMusique} options={{ presentation: 'modal' }} />
+      <Stack.Screen
+        name="Player"
+        component={EcranLecteurPleinEcran}
+        options={{presentation: 'modal'}}
+      />
+      <Stack.Screen
+        name="Queue"
+        component={EcranFileAttente}
+        options={{presentation: 'modal'}}
+      />
+      <Stack.Screen
+        name="AddMusic"
+        component={EcranAjouterMusique}
+        options={{presentation: 'modal'}}
+      />
       <Stack.Screen name="PlaylistDetail" component={EcranDetailPlaylist} />
+      <Stack.Screen
+        name="CreatePlaylist"
+        component={EcranCreerPlaylist}
+        options={{presentation: 'modal'}}
+      />
       <Stack.Screen name="Login" component={EcranDeConnexion} />
       <Stack.Screen name="Register" component={EcranDInscription} />
     </Stack.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  conteneurOnglets: {
+    flex: 1,
+  },
+});
 
 export default AppNavigator;

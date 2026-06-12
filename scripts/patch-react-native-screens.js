@@ -31,7 +31,9 @@ const anchor = 'import android.widget.TextView\n';
 const patched = source.replace(anchor, `${anchor}${appCompatImport}\n`);
 
 if (patched === source) {
-  console.warn('Could not patch react-native-screens ScreenStackHeaderConfig.kt');
+  console.warn(
+    'Could not patch react-native-screens ScreenStackHeaderConfig.kt',
+  );
   process.exit(0);
 }
 

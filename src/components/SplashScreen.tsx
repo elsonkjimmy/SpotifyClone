@@ -1,6 +1,6 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { COLORS, SPACING } from '../theme/colors';
+import {SafeAreaView, StyleSheet, Text, View} from 'react-native';
+import {COLORS, SPACING} from '../theme/colors';
 import SpotifyLogo from './SpotifyLogo';
 
 const SplashScreen = () => {
