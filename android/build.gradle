@@ -13,7 +13,7 @@ buildscript {
         // Java source/target compatibility for current Android/Firebase toolchains.
         sourceCompatibilityVersion = JavaVersion.VERSION_17
         targetCompatibilityVersion = JavaVersion.VERSION_17
-        kotlinVersion = "1.8.22"
+        kotlinVersion = "1.9.0"
     }
     repositories {
         google()
