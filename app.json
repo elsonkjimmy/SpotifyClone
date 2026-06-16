@@ -1,4 +1,7 @@
 {
   "name": "SpotifyClone",
-  "displayName": "SpotifyClone"
-}
+  "displayName": "Spotify Clone",
+  "android": {
+    "package": "com.groupe4.spotifyclone"
+  }
+  }

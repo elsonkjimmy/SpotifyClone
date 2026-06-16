@@ -74,14 +74,14 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.spotifyclone"
+    namespace "com.groupe4.spotifyclone"
     defaultConfig {
-        applicationId "com.spotifyclone"
+        applicationId "com.groupe4.spotifyclone"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        manifestPlaceholders = [appAuthRedirectScheme: "com.spotifyclone"]
+        manifestPlaceholders = [appAuthRedirectScheme: "com.groupe4.spotifyclone"]
     }
     signingConfigs {
         debug {

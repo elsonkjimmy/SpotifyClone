@@ -1,4 +1,4 @@
-package com.spotifyclone;
+package com.groupe4.spotifyclone;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

@@ -1,4 +1,4 @@
-package com.spotifyclone;
+package com.groupe4.spotifyclone;
 
 import android.app.Application;
 import com.facebook.react.PackageList;

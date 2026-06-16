@@ -98,7 +98,7 @@ export const connecterUtilisateurAvecGitHub = async () => {
       const configurationGitHub = {
         clientId: GITHUB_CLIENT_ID,
         clientSecret: GITHUB_CLIENT_SECRET,
-        redirectUrl: 'com.spotifyclone://oauth',
+        redirectUrl: 'com.groupe4.spotifyclone://oauth',
         scopes: ['user:email'],
         serviceConfiguration: {
           authorizationEndpoint: 'https://github.com/login/oauth/authorize',
