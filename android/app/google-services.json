@@ -14,19 +14,63 @@
       },
       "oauth_client": [
         {
-          "client_id": "394646013784-1l5fi0tcf0bqg2vl56kopnbei2ld9tk0.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.garderobe",
-            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
-          }
-        },
-        {
           "client_id": "394646013784-9dbuto3ban9ljhhvpjes0omi2r31ig4g.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.garderobe",
             "certificate_hash": "1ea1287ac39e894b872a907ed84fd922c874f9dd"
+          }
+        },
+        {
+          "client_id": "394646013784-ppo0td26fqd8si8be7holch16dlsvglq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkjnsmE5cRCmhzJWr-eFx7i5M7-faKPuM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "394646013784-ppo0td26fqd8si8be7holch16dlsvglq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "394646013784-4nrsokedi7rsg6au1pp7qj0d79pl0231.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.spotifyclone"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:394646013784:android:2518014dc7ea374c29472d",
+        "android_client_info": {
+          "package_name": "com.groupe4.spotifyclone"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "394646013784-00oq9876glfdhhj80ks8is3nfhp9sk40.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.groupe4.spotifyclone",
+            "certificate_hash": "1ea1287ac39e894b872a907ed84fd922c874f9dd"
+          }
+        },
+        {
+          "client_id": "394646013784-7dpppcaqdnmhhsmsngildjuq24atbj6f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.groupe4.spotifyclone",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
         {
