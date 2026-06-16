@@ -23,6 +23,7 @@ import {
 } from '../services/auth';
 import SpotifyLogo from '../components/SpotifyLogo';
 import Svg, {Path} from 'react-native-svg';
+import {Eye, EyeOff} from 'lucide-react-native';
 
 // Icône GitHub personnalisée dessinée en SVG
 const IconeGitHubCustom = ({
@@ -74,6 +75,7 @@ const EcranDeConnexion = ({navigation}: any) => {
   const [adresseEmail, setAdresseEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [estEnTrainDeCharger, setEstEnTrainDeCharger] = useState(false);
+  const [voirMotDePasse, setVoirMotDePasse] = useState(false);
 
   const gererActionDeConnexion = async () => {
     if (!adresseEmail || !motDePasse) {
@@ -151,14 +153,25 @@ const EcranDeConnexion = ({navigation}: any) => {
 
             <View style={styles.blocChamp}>
               <Text style={styles.label}>Mot de passe</Text>
-              <TextInput
-                style={styles.input}
-                value={motDePasse}
-                onChangeText={setMotDePasse}
-                placeholder="Votre mot de passe"
-                placeholderTextColor="#777"
-                secureTextEntry
-              />
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.inputFlex}
+                  value={motDePasse}
+                  onChangeText={setMotDePasse}
+                  placeholder="Votre mot de passe"
+                  placeholderTextColor="#777"
+                  secureTextEntry={!voirMotDePasse}
+                />
+                <TouchableOpacity
+                  onPress={() => setVoirMotDePasse(!voirMotDePasse)}
+                  style={styles.iconeOeil}>
+                  {voirMotDePasse ? (
+                    <EyeOff color="#777" size={20} />
+                  ) : (
+                    <Eye color="#777" size={20} />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity
@@ -247,6 +260,22 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 4,
     fontSize: 16,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333',
+    borderRadius: 4,
+    paddingRight: 15,
+  },
+  inputFlex: {
+    flex: 1,
+    color: COLORS.white,
+    padding: 15,
+    fontSize: 16,
+  },
+  iconeOeil: {
+    padding: 5,
   },
   boutonConnexion: {
     backgroundColor: COLORS.green,

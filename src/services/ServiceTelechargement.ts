@@ -4,11 +4,26 @@
  * et de basculer l'application en mode hors-ligne.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+
 // Liste en mémoire des IDs de chansons téléchargées
 let idsChansonsTelechargees: string[] = [];
 
+// Charger les téléchargements au démarrage
+AsyncStorage.getItem('telechargements').then(data => {
+  if (data) idsChansonsTelechargees = JSON.parse(data);
+});
+
 // État du mode hors-ligne
 let modeHorsLigneActif = false;
+
+// Écouteur réseau pour basculer automatiquement
+NetInfo.addEventListener(state => {
+  if (state.isConnected === false) {
+    activerModeHorsLigne(true);
+  }
+});
 
 /**
  * Télécharge virtuellement une chanson en l'ajoutant à la liste locale.
@@ -16,9 +31,10 @@ let modeHorsLigneActif = false;
 export const telechargerChanson = async (chansonId: string): Promise<void> => {
   return new Promise(resolve => {
     // Simulation d'un temps de téléchargement de 1.5 seconde
-    setTimeout(() => {
+    setTimeout(async () => {
       if (!idsChansonsTelechargees.includes(chansonId)) {
         idsChansonsTelechargees = [...idsChansonsTelechargees, chansonId];
+        await AsyncStorage.setItem('telechargements', JSON.stringify(idsChansonsTelechargees));
       }
       resolve();
     }, 1500);
@@ -34,6 +50,7 @@ export const supprimerChansonTelechargee = async (
   idsChansonsTelechargees = idsChansonsTelechargees.filter(
     id => id !== chansonId,
   );
+  await AsyncStorage.setItem('telechargements', JSON.stringify(idsChansonsTelechargees));
   return Promise.resolve();
 };
 

@@ -17,12 +17,15 @@ import LinearGradient from 'react-native-linear-gradient';
 import {COLORS, SPACING} from '../theme/colors';
 import {creerCompteUtilisateurAvecEmail} from '../services/auth';
 import SpotifyLogo from '../components/SpotifyLogo';
+import {Eye, EyeOff} from 'lucide-react-native';
 
 const EcranDInscription = ({navigation}: any) => {
   const [emailSaisi, setEmailSaisi] = useState('');
   const [motDePasseSaisi, setMotDePasseSaisi] = useState('');
   const [confirmationMotDePasse, setConfirmationMotDePasse] = useState('');
   const [estEnTrainDeCharger, setEstEnTrainDeCharger] = useState(false);
+  const [voirMotDePasse, setVoirMotDePasse] = useState(false);
+  const [voirConf, setVoirConf] = useState(false);
 
   const gererActionDInscription = async () => {
     if (!emailSaisi || !motDePasseSaisi || !confirmationMotDePasse) {
@@ -75,26 +78,36 @@ const EcranDInscription = ({navigation}: any) => {
 
             <View style={styles.blocChamp}>
               <Text style={styles.label}>Créez un mot de passe</Text>
-              <TextInput
-                style={styles.input}
-                value={motDePasseSaisi}
-                onChangeText={setMotDePasseSaisi}
-                secureTextEntry
-                placeholder="Au moins 6 caractères"
-                placeholderTextColor="#777"
-              />
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.inputFlex}
+                  value={motDePasseSaisi}
+                  onChangeText={setMotDePasseSaisi}
+                  secureTextEntry={!voirMotDePasse}
+                  placeholder="Au moins 6 caractères"
+                  placeholderTextColor="#777"
+                />
+                <TouchableOpacity onPress={() => setVoirMotDePasse(!voirMotDePasse)} style={styles.iconeOeil}>
+                  {voirMotDePasse ? <EyeOff color="#777" size={20} /> : <Eye color="#777" size={20} />}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.blocChamp}>
               <Text style={styles.label}>Confirmez le mot de passe</Text>
-              <TextInput
-                style={styles.input}
-                value={confirmationMotDePasse}
-                onChangeText={setConfirmationMotDePasse}
-                secureTextEntry
-                placeholder="Répétez le mot de passe"
-                placeholderTextColor="#777"
-              />
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.inputFlex}
+                  value={confirmationMotDePasse}
+                  onChangeText={setConfirmationMotDePasse}
+                  secureTextEntry={!voirConf}
+                  placeholder="Répétez le mot de passe"
+                  placeholderTextColor="#777"
+                />
+                <TouchableOpacity onPress={() => setVoirConf(!voirConf)} style={styles.iconeOeil}>
+                  {voirConf ? <EyeOff color="#777" size={20} /> : <Eye color="#777" size={20} />}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity
@@ -151,6 +164,22 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 4,
     fontSize: 16,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333',
+    borderRadius: 4,
+    paddingRight: 15,
+  },
+  inputFlex: {
+    flex: 1,
+    color: COLORS.white,
+    padding: 15,
+    fontSize: 16,
+  },
+  iconeOeil: {
+    padding: 5,
   },
   boutonInscription: {
     backgroundColor: COLORS.green,
