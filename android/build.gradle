@@ -103,4 +103,12 @@ subprojects {
             }
         }
     }
+
+    if (project.name == "react-native-async-storage_async-storage") {
+        afterEvaluate {
+            android {
+                namespace "com.reactnativecommunity.asyncstorage"
+            }
+        }
+    }
 }
