@@ -35,6 +35,8 @@ try {
     GoogleSignin.configure({
       // ID client Web Firebase (généré automatiquement lors de l'activation de Google Auth)
       webClientId: GOOGLE_WEB_CLIENT_ID,
+      offlineAccess: true, // Requis pour obtenir l'idToken de manière fiable
+      forceCodeForRefreshToken: true,
     });
   }
 } catch (erreur) {
