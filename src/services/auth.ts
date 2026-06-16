@@ -135,8 +135,10 @@ export const connecterUtilisateurAvecGoogle = async () => {
       }
 
       await GoogleSignin.hasPlayServices();
-      const {idToken} = await GoogleSignin.signIn();
+      const {idToken, user} = await GoogleSignin.signIn();
+      console.log('ID Token reçu:', !!idToken);
       if (!idToken) {
+        console.log('Réponse complète GoogleSignin:', {idToken, user});
         throw new Error('Aucun jeton Google reçu');
       }
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
