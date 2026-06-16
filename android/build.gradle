@@ -96,4 +96,12 @@ subprojects {
             dependencies.add("implementation", "com.google.guava:guava:31.1-android")
         }
     }
+
+    if (project.name == "react-native-voice_voice") {
+        afterEvaluate {
+            android {
+                namespace "com.wenkesj.voice"
+            }
+        }
+    }
 }
