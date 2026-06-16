@@ -501,7 +501,7 @@ export const recupererPlaylistsUtilisateur = async (
  */
 export const supprimerMusiqueDeFirestore = async (
   chansonId: string,
-): Promise<void> => {
+): Promise<boolean> => {
   // Mise à jour locale pour le mode démo
   musiquesLocales = musiquesLocales.filter(m => m.id !== chansonId);
 
@@ -510,8 +510,10 @@ export const supprimerMusiqueDeFirestore = async (
       firestore().collection('songs').doc(chansonId).delete(),
       5000,
     );
+    return true;
   } catch (erreur) {
     console.log('Mode démo - musique supprimée en local:', erreur);
+    return false;
   }
 };
 
@@ -522,7 +524,7 @@ export const modifierMusiqueDansFirestore = async (
   chansonId: string,
   nouveauTitre: string,
   nouvelArtiste: string,
-): Promise<void> => {
+): Promise<boolean> => {
   // Mise à jour locale pour le mode démo
   musiquesLocales = musiquesLocales.map(m =>
     m.id === chansonId ? {...m, title: nouveauTitre, artist: nouvelArtiste} : m,
@@ -536,7 +538,9 @@ export const modifierMusiqueDansFirestore = async (
       }),
       5000,
     );
+    return true;
   } catch (erreur) {
     console.log('Mode démo - musique modifiée en local:', erreur);
+    return false;
   }
 };

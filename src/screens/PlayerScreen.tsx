@@ -31,6 +31,8 @@ import {
   AlignLeft,
   ListMusic,
   Download,
+  Edit3,
+  Trash2,
 } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import LinearGradient from 'react-native-linear-gradient';
@@ -55,6 +57,7 @@ import {
   telechargerChanson,
   supprimerChansonTelechargee,
 } from '../services/ServiceTelechargement';
+import {supprimerMusiqueDeFirestore} from '../services/firestore';
 import {
   usePlaybackState,
   State,
@@ -63,6 +66,7 @@ import {
 } from 'react-native-track-player';
 import {useAuth} from '../context/AuthContext';
 import BoutonLike from '../components/BoutonLike';
+import ModalModifierMusique from '../components/ModalModifierMusique';
 
 const {width} = Dimensions.get('window');
 
@@ -142,6 +146,7 @@ const EcranLecteurPleinEcran = ({navigation}: any) => {
   const [estTelecharge, setEstTelecharge] = useState(false);
   const [estEnCoursDeTelechargement, setEstEnCoursDeTelechargement] =
     useState(false);
+  const [modalEditionVisible, setModalEditionVisible] = useState(false);
 
   useEffect(() => {
     const intervalle = setInterval(() => {
@@ -233,7 +238,7 @@ const EcranLecteurPleinEcran = ({navigation}: any) => {
     } else {
       setEstEnCoursDeTelechargement(true);
       try {
-        await telechargerChanson(morceauActuel.id);
+        await telechargerChanson(morceauActuel);
         setEstTelecharge(true);
         Alert.alert(
           'Succès',
@@ -297,6 +302,42 @@ const EcranLecteurPleinEcran = ({navigation}: any) => {
 
   const couleurRepetition =
     modeRepetition !== RepeatMode.Off ? COLORS.green : COLORS.white;
+  const chansonActuelle = {
+    id: morceauActuel.id || '',
+    title: morceauActuel.title ?? '',
+    artist: morceauActuel.artist ?? '',
+    artwork: morceauActuel.artwork ?? '',
+    url: morceauActuel.url ?? '',
+  };
+
+  const gererSuppressionAdmin = () => {
+    if (!chansonActuelle.id) {
+      return;
+    }
+    Alert.alert(
+      'Supprimer du serveur 🚨',
+      'Êtes-vous sûr de vouloir supprimer définitivement cette musique du catalogue ?',
+      [
+        {text: 'Annuler', style: 'cancel'},
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            const suppressionServeurReussie = await supprimerMusiqueDeFirestore(
+              chansonActuelle.id,
+            );
+            Alert.alert(
+              'Terminé',
+              suppressionServeurReussie
+                ? 'La musique a été supprimée du serveur.'
+                : 'La musique a été retirée localement (hors-ligne / serveur indisponible).',
+            );
+            navigation.goBack();
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <View style={styles.conteneurGlobal}>
@@ -351,16 +392,27 @@ const EcranLecteurPleinEcran = ({navigation}: any) => {
           </View>
           {estEnTrainDeJouer && <VisualiseurAudio />}
           <BoutonLike
-            chanson={{
-              id: morceauActuel.id || '',
-              title: morceauActuel.title ?? '',
-              artist: morceauActuel.artist ?? '',
-              artwork: morceauActuel.artwork ?? '',
-              url: morceauActuel.url ?? '',
-            }}
+            chanson={chansonActuelle}
             taille={28}
           />
         </View>
+
+        {utilisateur?.email?.toLowerCase() === 'admin@ict.com' && (
+          <View style={styles.actionsAdmin}>
+            <TouchableOpacity
+              style={styles.boutonAdmin}
+              onPress={() => setModalEditionVisible(true)}>
+              <Edit3 color={COLORS.green} size={18} />
+              <Text style={styles.texteBoutonAdmin}>Modifier</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.boutonAdmin}
+              onPress={gererSuppressionAdmin}>
+              <Trash2 color="#FF6B6B" size={18} />
+              <Text style={styles.texteBoutonAdmin}>Supprimer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.sectionProgression}>
           <Slider
@@ -481,6 +533,15 @@ const EcranLecteurPleinEcran = ({navigation}: any) => {
           </View>
         </View>
       </SafeAreaView>
+
+      <ModalModifierMusique
+        visible={modalEditionVisible}
+        chanson={chansonActuelle}
+        onFermer={() => setModalEditionVisible(false)}
+        onModifier={() => {
+          // Le lecteur garde les métadonnées en mémoire jusqu'au prochain rechargement.
+        }}
+      />
     </View>
   );
 };
@@ -622,6 +683,28 @@ const styles = StyleSheet.create({
   },
   boutonFileAttente: {
     marginRight: SPACING.m,
+  },
+  actionsAdmin: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: SPACING.m,
+    marginBottom: SPACING.m,
+  },
+  boutonAdmin: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+    paddingHorizontal: SPACING.m,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  texteBoutonAdmin: {
+    color: COLORS.white,
+    marginLeft: 6,
+    fontWeight: '600',
+    fontSize: 13,
   },
   conteneurVisualiseur: {
     flexDirection: 'row',

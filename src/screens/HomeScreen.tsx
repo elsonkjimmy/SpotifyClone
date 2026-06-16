@@ -32,6 +32,7 @@ import type {Chanson} from '../types';
 import {
   obtenirModeHorsLigne,
   estChansonTelechargee,
+  recupererChansonsTelechargees,
 } from '../services/ServiceTelechargement';
 
 // ─── Sous-composant : Carte Raccourci Animée avec Effet de Rebond ───
@@ -102,7 +103,15 @@ const EcranAccueil = ({navigation}: any) => {
   const chargerLesDonneesDepuisFirebase = useCallback(async () => {
     setEstEnTrainDeCharger(true);
     try {
-      const musiques = await recupererToutesLesChansons();
+      let musiques = await recupererToutesLesChansons();
+      if (obtenirModeHorsLigne()) {
+        const chansonsLocalesTelechargees = recupererChansonsTelechargees();
+        const mapParId = new Map(musiques.map(m => [m.id, m]));
+        chansonsLocalesTelechargees.forEach(chanson => {
+          mapParId.set(chanson.id, chanson);
+        });
+        musiques = Array.from(mapParId.values());
+      }
       setListeDesMusiques(musiques);
     } catch (erreur) {
       console.log('Erreur lors du chargement des musiques:', erreur);

@@ -6,13 +6,21 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
+import type {Chanson} from '../types';
+
+const CLE_TELECHARGEMENTS_IDS = 'telechargements';
+const CLE_TELECHARGEMENTS_CHANSONS = 'telechargements_chansons';
 
 // Liste en mémoire des IDs de chansons téléchargées
 let idsChansonsTelechargees: string[] = [];
+let chansonsTelechargeesParId: Record<string, Chanson> = {};
 
 // Charger les téléchargements au démarrage
-AsyncStorage.getItem('telechargements').then(data => {
+AsyncStorage.getItem(CLE_TELECHARGEMENTS_IDS).then(data => {
   if (data) idsChansonsTelechargees = JSON.parse(data);
+});
+AsyncStorage.getItem(CLE_TELECHARGEMENTS_CHANSONS).then(data => {
+  if (data) chansonsTelechargeesParId = JSON.parse(data);
 });
 
 // État du mode hors-ligne
@@ -28,14 +36,27 @@ NetInfo.addEventListener(state => {
 /**
  * Télécharge virtuellement une chanson en l'ajoutant à la liste locale.
  */
-export const telechargerChanson = async (chansonId: string): Promise<void> => {
+const sauvegarderEtatTelechargements = async () => {
+  await AsyncStorage.multiSet([
+    [CLE_TELECHARGEMENTS_IDS, JSON.stringify(idsChansonsTelechargees)],
+    [CLE_TELECHARGEMENTS_CHANSONS, JSON.stringify(chansonsTelechargeesParId)],
+  ]);
+};
+
+export const telechargerChanson = async (
+  chanson: string | Chanson,
+): Promise<void> => {
+  const chansonId = typeof chanson === 'string' ? chanson : chanson.id;
   return new Promise(resolve => {
     // Simulation d'un temps de téléchargement de 1.5 seconde
     setTimeout(async () => {
       if (!idsChansonsTelechargees.includes(chansonId)) {
         idsChansonsTelechargees = [...idsChansonsTelechargees, chansonId];
-        await AsyncStorage.setItem('telechargements', JSON.stringify(idsChansonsTelechargees));
       }
+      if (typeof chanson !== 'string') {
+        chansonsTelechargeesParId[chansonId] = chanson;
+      }
+      await sauvegarderEtatTelechargements();
       resolve();
     }, 1500);
   });
@@ -50,7 +71,8 @@ export const supprimerChansonTelechargee = async (
   idsChansonsTelechargees = idsChansonsTelechargees.filter(
     id => id !== chansonId,
   );
-  await AsyncStorage.setItem('telechargements', JSON.stringify(idsChansonsTelechargees));
+  delete chansonsTelechargeesParId[chansonId];
+  await sauvegarderEtatTelechargements();
   return Promise.resolve();
 };
 
@@ -95,4 +117,11 @@ export const obtenirModeHorsLigne = (): boolean => {
  */
 export const recupererTousLesTelechargements = (): string[] => {
   return [...idsChansonsTelechargees];
+};
+
+/**
+ * Retourne les chansons téléchargées avec leurs métadonnées (cache local).
+ */
+export const recupererChansonsTelechargees = (): Chanson[] => {
+  return Object.values(chansonsTelechargeesParId);
 };

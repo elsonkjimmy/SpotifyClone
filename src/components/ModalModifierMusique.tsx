@@ -57,12 +57,17 @@ const ModalModifierMusique = ({
 
     setEstEnCours(true);
     try {
-      await modifierMusiqueDansFirestore(
+      const majServeurReussie = await modifierMusiqueDansFirestore(
         chanson.id,
         titreNettoye,
         artisteNettoye,
       );
-      Alert.alert('Succès', 'Le morceau a été mis à jour avec succès.');
+      Alert.alert(
+        'Terminé',
+        majServeurReussie
+          ? 'Le morceau a été mis à jour sur le serveur.'
+          : 'Le morceau a été mis à jour localement (hors-ligne / serveur indisponible).',
+      );
       onModifier();
       onFermer();
     } catch (erreur) {

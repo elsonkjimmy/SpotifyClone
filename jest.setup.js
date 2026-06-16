@@ -227,6 +227,7 @@ jest.mock('./src/services/ServiceTelechargement', () => ({
   activerModeHorsLigne: jest.fn(),
   obtenirModeHorsLigne: jest.fn().mockReturnValue(false),
   recupererTousLesTelechargements: jest.fn().mockReturnValue([]),
+  recupererChansonsTelechargees: jest.fn().mockReturnValue([]),
 }));
 
 jest.mock(

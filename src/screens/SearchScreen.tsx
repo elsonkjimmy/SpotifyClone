@@ -30,6 +30,7 @@ import type {Chanson} from '../types';
 import {
   obtenirModeHorsLigne,
   estChansonTelechargee,
+  recupererChansonsTelechargees,
 } from '../services/ServiceTelechargement';
 
 const CATEGORIES_RECHERCHE = [
@@ -103,6 +104,12 @@ const EcranRecherche = () => {
     try {
       let musiques = await recupererToutesLesChansons();
       if (obtenirModeHorsLigne()) {
+        const chansonsLocalesTelechargees = recupererChansonsTelechargees();
+        const mapParId = new Map(musiques.map(m => [m.id, m]));
+        chansonsLocalesTelechargees.forEach(chanson => {
+          mapParId.set(chanson.id, chanson);
+        });
+        musiques = Array.from(mapParId.values());
         musiques = musiques.filter(m => estChansonTelechargee(m.id));
       }
       setToutesLesMusiques(musiques);

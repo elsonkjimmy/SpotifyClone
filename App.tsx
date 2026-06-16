@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import {DarkTheme, NavigationContainer} from '@react-navigation/native';
 import {StatusBar} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -8,6 +8,15 @@ import {initialiserLeLecteurAudio} from './src/services/ServiceLecteurAudio';
 import {initialiserDonneesDeTest} from './src/services/firestore';
 import {AuthProvider} from './src/context/AuthContext';
 import {ToastProvider} from './src/context/ToastContext';
+
+const navigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: COLORS.black,
+    card: COLORS.black,
+  },
+};
 
 const App = () => {
   useEffect(() => {
@@ -24,7 +33,7 @@ const App = () => {
   return (
     <AuthProvider>
       <ToastProvider>
-        <NavigationContainer>
+        <NavigationContainer theme={navigationTheme}>
           <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
           <AppNavigator />
         </NavigationContainer>

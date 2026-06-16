@@ -110,7 +110,12 @@ const AppNavigator = () => {
   }
 
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        contentStyle: {backgroundColor: COLORS.black},
+        animation: 'fade',
+      }}>
       <Stack.Screen name="Main" component={NavigateurParOnglets} />
       <Stack.Screen
         name="Player"
