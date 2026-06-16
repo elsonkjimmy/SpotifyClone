@@ -134,11 +134,23 @@ export const connecterUtilisateurAvecGoogle = async () => {
         throw creerErreurConfiguration('Google');
       }
 
-      await GoogleSignin.hasPlayServices();
-      const {idToken, user} = await GoogleSignin.signIn();
+      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+      const resultatConnexion = await GoogleSignin.signIn();
+
+      if (resultatConnexion.type === 'cancelled') {
+        throw new Error('Connexion Google annulée');
+      }
+
+      // API v13+ : signIn() renvoie { type: 'success', data: { idToken, user, ... } }
+      let idToken = resultatConnexion.data.idToken;
+      if (!idToken) {
+        const jetons = await GoogleSignin.getTokens();
+        idToken = jetons.idToken;
+      }
+
       console.log('ID Token reçu:', !!idToken);
       if (!idToken) {
-        console.log('Réponse complète GoogleSignin:', {idToken, user});
+        console.log('Réponse complète GoogleSignin:', resultatConnexion);
         throw new Error('Aucun jeton Google reçu');
       }
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);

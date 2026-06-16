@@ -235,7 +235,11 @@ jest.mock(
     GoogleSignin: {
       configure: jest.fn(),
       hasPlayServices: jest.fn().mockResolvedValue(true),
-      signIn: jest.fn().mockResolvedValue({idToken: 'test-id-token'}),
+      getTokens: jest.fn().mockResolvedValue({idToken: 'test-id-token'}),
+      signIn: jest.fn().mockResolvedValue({
+        type: 'success',
+        data: {idToken: 'test-id-token', user: {email: 'test@example.com'}},
+      }),
     },
   }),
   {virtual: true},
