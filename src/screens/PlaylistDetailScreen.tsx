@@ -257,7 +257,7 @@ const EcranDetailPlaylist = ({route, navigation}: any) => {
           <FlatList
             data={musiques}
             keyExtractor={item => item.id}
-            renderItem={renderLignePlaylist}
+            renderItem={renderLigneMusique}
             contentContainerStyle={styles.liste}
             ListEmptyComponent={
               <View style={styles.conteneurVide}>
