@@ -62,7 +62,7 @@ import {
   useProgress,
 } from 'react-native-track-player';
 import {useAuth} from '../context/AuthContext';
-import {basculerFavori, estChansonFavorie} from '../services/firestore';
+import BoutonLike from '../components/BoutonLike';
 
 const {width} = Dimensions.get('window');
 
@@ -136,7 +136,6 @@ const EcranLecteurPleinEcran = ({navigation}: any) => {
     obtenirEtatModeAleatoire(),
   );
   const [modeRepetition, setModeRepetition] = useState(obtenirModeRepetition());
-  const [estFavori, setEstFavori] = useState(false);
   // État pour afficher ou masquer le panneau de paroles
   const [afficherParoles, setAfficherParoles] = useState(false);
   const [secondesRestantes, setSecondesRestantes] = useState(0);
@@ -271,21 +270,6 @@ const EcranLecteurPleinEcran = ({navigation}: any) => {
     setPositionLocale(position);
   }, [position]);
 
-  useEffect(() => {
-    const verifierFavori = async () => {
-      if (utilisateur && morceauActuel?.id) {
-        const favori = await estChansonFavorie(
-          utilisateur.uid,
-          morceauActuel.id,
-        );
-        setEstFavori(favori);
-      } else {
-        setEstFavori(false);
-      }
-    };
-    verifierFavori();
-  }, [utilisateur, morceauActuel?.id]);
-
   if (!morceauActuel) {
     return null;
   }
@@ -309,21 +293,6 @@ const EcranLecteurPleinEcran = ({navigation}: any) => {
       morceauActuel.title || 'Musique',
       morceauActuel.artist || 'Artiste',
     );
-  };
-
-  const gererFavori = async () => {
-    if (!utilisateur || !morceauActuel.id) {
-      navigation.navigate('Login');
-      return;
-    }
-    const nouveauEtat = await basculerFavori(utilisateur.uid, {
-      id: morceauActuel.id,
-      title: morceauActuel.title ?? '',
-      artist: morceauActuel.artist ?? '',
-      artwork: morceauActuel.artwork ?? '',
-      url: morceauActuel.url ?? '',
-    });
-    setEstFavori(nouveauEtat);
   };
 
   const couleurRepetition =
@@ -381,13 +350,16 @@ const EcranLecteurPleinEcran = ({navigation}: any) => {
             </Text>
           </View>
           {estEnTrainDeJouer && <VisualiseurAudio />}
-          <TouchableOpacity onPress={gererFavori}>
-            <Heart
-              color={estFavori ? COLORS.green : COLORS.white}
-              size={28}
-              fill={estFavori ? COLORS.green : 'transparent'}
-            />
-          </TouchableOpacity>
+          <BoutonLike
+            chanson={{
+              id: morceauActuel.id || '',
+              title: morceauActuel.title ?? '',
+              artist: morceauActuel.artist ?? '',
+              artwork: morceauActuel.artwork ?? '',
+              url: morceauActuel.url ?? '',
+            }}
+            taille={28}
+          />
         </View>
 
         <View style={styles.sectionProgression}>

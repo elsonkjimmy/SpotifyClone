@@ -40,40 +40,33 @@ const BoutonControleAnime = ({
   surAppui: () => void;
   children: React.ReactNode;
 }) => {
-  // Valeur d'échelle conservée dans un ref pour ne pas la recréer à chaque rendu
   const valeurEchelle = useRef(new Animated.Value(1)).current;
 
-  /**
-   * Gère l'animation "appui" : on réduit l'échelle à 0.85 puis
-   * on revient à 1.0 avec un effet de ressort (spring) pour donner
-   * un retour visuel "haptique".
-   */
-  const gererAppuiAvecAnimation = useCallback(() => {
-    Animated.sequence([
-      // Phase 1 : réduction rapide
-      Animated.timing(valeurEchelle, {
-        toValue: 0.85,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      // Phase 2 : retour élastique
-      Animated.spring(valeurEchelle, {
-        toValue: 1.0,
-        friction: 3,
-        tension: 120,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // On déclenche l'action réelle en même temps
+  const gererAppuiIn = () => {
+    Animated.timing(valeurEchelle, {
+      toValue: 0.8,
+      duration: 50,
+      useNativeDriver: true,
+    }).start();
+    // On déclenche l'action immédiatement au contact pour une réactivité maximale
     surAppui();
-  }, [surAppui, valeurEchelle]);
+  };
+
+  const gererAppuiOut = () => {
+    Animated.spring(valeurEchelle, {
+      toValue: 1.0,
+      friction: 3,
+      tension: 200,
+      useNativeDriver: true,
+    }).start();
+  };
 
   return (
     <TouchableOpacity
-      onPress={gererAppuiAvecAnimation}
+      onPressIn={gererAppuiIn}
+      onPressOut={gererAppuiOut}
       style={styles.boutonControle}
-      activeOpacity={0.7}>
+      activeOpacity={1}>
       <Animated.View style={{transform: [{scale: valeurEchelle}]}}>
         {children}
       </Animated.View>

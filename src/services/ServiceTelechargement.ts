@@ -44,11 +44,26 @@ export const estChansonTelechargee = (chansonId: string): boolean => {
   return idsChansonsTelechargees.includes(chansonId);
 };
 
+// Liste d'abonnés pour notifier les changements d'état
+const auditeurs: Array<(actif: boolean) => void> = [];
+
 /**
  * Active ou désactive le mode hors-ligne global de l'application.
  */
 export const activerModeHorsLigne = (actif: boolean): void => {
   modeHorsLigneActif = actif;
+  auditeurs.forEach(listener => listener(actif));
+};
+
+/**
+ * Permet de s'abonner aux changements du mode hors-ligne.
+ */
+export const sAbonnerAuModeHorsLigne = (listener: (actif: boolean) => void) => {
+  auditeurs.push(listener);
+  return () => {
+    const index = auditeurs.indexOf(listener);
+    if (index > -1) auditeurs.splice(index, 1);
+  };
 };
 
 /**

@@ -22,6 +22,8 @@ import {Heart, Plus, Search, ArrowUpDown, ListPlus} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {COLORS, SPACING} from '../theme/colors';
 import {useAuth} from '../context/AuthContext';
+import {useToast} from '../context/ToastContext';
+import OfflineBanner from '../components/OfflineBanner';
 import {
   recupererToutesLesPlaylists,
   recupererFavorisUtilisateur,
@@ -164,6 +166,7 @@ const EcranMaBibliotheque = ({navigation}: any) => {
         style={styles.degradeFond}
       />
       <SafeAreaView style={styles.zoneSafe}>
+        <OfflineBanner />
         <View style={styles.entete}>
           <View style={styles.ligneUtilisateur}>
             <View style={styles.avatarCercle}>
@@ -256,9 +259,18 @@ const EcranMaBibliotheque = ({navigation}: any) => {
               />
             }
             ListEmptyComponent={
-              <Text style={styles.texteVide}>
-                Aucune playlist pour ce filtre.
-              </Text>
+              <View style={styles.conteneurVide}>
+                <ListPlus color={COLORS.lightGray} size={60} style={{marginBottom: 20}} />
+                <Text style={styles.titreVide}>Ta bibliothèque est vide</Text>
+                <Text style={styles.sousTitreVide}>
+                  Commence par créer une playlist ou ajoute tes titres préférés.
+                </Text>
+                <TouchableOpacity
+                  style={styles.boutonExplorer}
+                  onPress={() => navigation.navigate('Search')}>
+                  <Text style={styles.texteBoutonExplorer}>EXPLORER</Text>
+                </TouchableOpacity>
+              </View>
             }
           />
         )}
@@ -338,7 +350,33 @@ const styles = StyleSheet.create({
   nomPlaylistSpeciale: {color: COLORS.green},
   infoCreateur: {color: COLORS.lightGray, fontSize: 13, marginTop: 4},
   chargement: {marginTop: 40},
-  texteVide: {color: COLORS.lightGray, textAlign: 'center', marginTop: 40},
+  conteneurVide: {alignItems: 'center', marginTop: 80, paddingHorizontal: 40},
+  titreVide: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  sousTitreVide: {
+    color: COLORS.lightGray,
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 20,
+  },
+  boutonExplorer: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 30,
+  },
+  texteBoutonExplorer: {
+    color: COLORS.black,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    fontSize: 12,
+  },
 });
 
 export default EcranMaBibliotheque;

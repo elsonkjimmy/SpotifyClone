@@ -34,6 +34,7 @@ import {
 } from '../services/firestore';
 import type {Chanson, Playlist} from '../types';
 import {useAuth} from '../context/AuthContext';
+import BoutonLike from '../components/BoutonLike';
 import ModalAjouterAPlaylist from '../components/ModalAjouterAPlaylist';
 import ModalModifierMusique from '../components/ModalModifierMusique';
 
@@ -91,6 +92,7 @@ const LigneMusiqueAnimee = ({
           <Text style={styles.artisteMusique}>{item.artist}</Text>
         </View>
         <View style={styles.iconesActions}>
+          <BoutonLike chanson={item} taille={20} />
           {estAdmin && (
             <>
               <TouchableOpacity
@@ -105,7 +107,7 @@ const LigneMusiqueAnimee = ({
               </TouchableOpacity>
             </>
           )}
-          <TouchableOpacity onPress={surAjouterAPlaylist}>
+          <TouchableOpacity onPress={surAjouterAPlaylist} style={styles.boutonActionLigne}>
             <MoreVertical color={COLORS.lightGray} size={20} />
           </TouchableOpacity>
         </View>
@@ -125,6 +127,15 @@ const EcranDetailPlaylist = ({route, navigation}: any) => {
   const [modalPlaylistVisible, setModalPlaylistVisible] = useState(false);
   const [chansonAEditer, setChansonAEditer] = useState<Chanson | null>(null);
   const [modalEditionVisible, setModalEditionVisible] = useState(false);
+
+  const calculerDureeTotale = () => {
+    // On simule une durée moyenne de 3min30 par titre pour l'affichage
+    const totalMinutes = musiques.length * 3.5;
+    const heures = Math.floor(totalMinutes / 60);
+    const minutes = Math.floor(totalMinutes % 60);
+    if (heures > 0) return `${heures} h ${minutes} min`;
+    return `${minutes} min`;
+  };
 
   const gererSuppressionMusique = (chansonId: string) => {
     Alert.alert(
@@ -217,7 +228,15 @@ const EcranDetailPlaylist = ({route, navigation}: any) => {
             />
           )}
           <Text style={styles.titrePlaylist}>{playlist.nom}</Text>
-          <Text style={styles.createur}>{playlist.createur}</Text>
+          <View style={styles.ligneInfosCreateur}>
+            <Text style={styles.createur}>{playlist.createur}</Text>
+          </View>
+          <Text style={styles.metadata}>
+            {musiques.length} titres • {calculerDureeTotale()}
+          </Text>
+          <Text style={styles.abonnés}>
+            {Math.floor(Math.random() * 1000) + 1} abonnés
+          </Text>
 
           <TouchableOpacity
             style={[
@@ -238,10 +257,19 @@ const EcranDetailPlaylist = ({route, navigation}: any) => {
           <FlatList
             data={musiques}
             keyExtractor={item => item.id}
-            renderItem={renderLigneMusique}
+            renderItem={renderLignePlaylist}
             contentContainerStyle={styles.liste}
             ListEmptyComponent={
-              <Text style={styles.texteVide}>Cette playlist est vide.</Text>
+              <View style={styles.conteneurVide}>
+                <Text style={styles.texteVide}>Cette playlist est vide.</Text>
+                <TouchableOpacity
+                  style={styles.boutonAjouterVide}
+                  onPress={() => navigation.navigate('Search')}>
+                  <Text style={styles.texteBoutonAjouterVide}>
+                    TROUVER DES TITRES
+                  </Text>
+                </TouchableOpacity>
+              </View>
             }
           />
         )}
@@ -295,8 +323,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginTop: 20,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
-  createur: {color: COLORS.lightGray, fontSize: 14, marginTop: 5},
+  ligneInfosCreateur: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  createur: {color: COLORS.white, fontSize: 14, fontWeight: 'bold'},
+  metadata: {color: COLORS.lightGray, fontSize: 12, marginTop: 4},
+  abonnés: {color: COLORS.lightGray, fontSize: 12, marginTop: 2, opacity: 0.7},
   boutonPlay: {
     backgroundColor: COLORS.green,
     width: 60,
@@ -318,7 +355,21 @@ const styles = StyleSheet.create({
   titreMusique: {color: COLORS.white, fontSize: 16, fontWeight: '500'},
   artisteMusique: {color: COLORS.lightGray, fontSize: 13, marginTop: 2},
   chargement: {marginTop: 30},
-  texteVide: {color: COLORS.lightGray, textAlign: 'center', marginTop: 30},
+  conteneurVide: {alignItems: 'center', marginTop: 40},
+  texteVide: {color: COLORS.lightGray, textAlign: 'center', marginBottom: 20},
+  boutonAjouterVide: {
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  texteBoutonAjouterVide: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
   iconesActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -332,3 +383,4 @@ const styles = StyleSheet.create({
 });
 
 export default EcranDetailPlaylist;
+

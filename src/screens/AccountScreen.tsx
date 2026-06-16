@@ -29,6 +29,7 @@ import {COLORS, SPACING} from '../theme/colors';
 import {deconnecterUtilisateur} from '../services/auth';
 import SpotifyLogo from '../components/SpotifyLogo';
 import {useAuth} from '../context/AuthContext';
+import {useToast} from '../context/ToastContext';
 import {recupererHistorique} from '../services/ServiceHistorique';
 import {
   recupererToutesLesChansons,
@@ -49,6 +50,7 @@ const RenduLigneOption = ({icone: Icone, titre, action}: any) => (
 
 const EcranMonCompte = ({navigation}: any) => {
   const {utilisateur, estAdmin} = useAuth();
+  const {showToast} = useToast();
   const [modeHorsLigne, setModeHorsLigne] = useState(obtenirModeHorsLigne());
   const [statistiques, setStatistiques] = useState({
     totalEcoutes: 0,
@@ -135,6 +137,7 @@ const EcranMonCompte = ({navigation}: any) => {
   const gererBasculeHorsLigne = (valeur: boolean) => {
     activerModeHorsLigne(valeur);
     setModeHorsLigne(valeur);
+    showToast(valeur ? 'Mode hors-ligne activé' : 'Mode en ligne activé', 'success');
   };
 
   return (
@@ -144,18 +147,31 @@ const EcranMonCompte = ({navigation}: any) => {
         style={styles.degradeFond}
       />
       <SafeAreaView style={styles.zoneSafe}>
+        <View style={styles.entetePremium}>
+          <View style={styles.ligneUtilisateur}>
+            <View style={styles.avatarCercleSmall}>
+              <Text style={styles.texteAvatarSmall}>
+                {utilisateur?.email?.charAt(0).toUpperCase() || 'G'}
+              </Text>
+            </View>
+            <Text style={styles.titrePagePremium}>Mon compte</Text>
+            
+            <View style={styles.iconesAction}>
+              <TouchableOpacity 
+                style={styles.boutonIcone}
+                onPress={() => showToast('Aucune nouvelle notification')}
+              >
+                <Bell color={COLORS.white} size={22} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.boutonIcone} onPress={() => deconnecterUtilisateur()}>
+                <LogOut color={COLORS.white} size={22} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
         <ScrollView contentContainerStyle={styles.zoneScroll}>
           <View style={styles.sectionProfil}>
-            <View style={styles.avatarCercle}>
-              {utilisateur ? (
-                <Text style={styles.lettreAvatar}>
-                  {utilisateur.email?.charAt(0).toUpperCase()}
-                </Text>
-              ) : (
-                <User color={COLORS.black} size={40} />
-              )}
-            </View>
-
             <View style={styles.infosUtilisateur}>
               <Text style={styles.nomUtilisateur}>
                 {utilisateur ? utilisateur.email?.split('@')[0] : 'Invité'}
@@ -279,9 +295,44 @@ const EcranMonCompte = ({navigation}: any) => {
                 thumbColor={modeHorsLigne ? COLORS.white : '#f4f3f4'}
               />
             </View>
-            <RenduLigneOption icone={Bell} titre="Notifications" />
-            <RenduLigneOption icone={ShieldCheck} titre="Sécurité" />
-            <RenduLigneOption icone={HelpCircle} titre="Aide" />
+            <RenduLigneOption 
+              icone={Bell} 
+              titre="Notifications" 
+              action={() => showToast('Gérez vos notifications')} 
+            />
+            <RenduLigneOption 
+              icone={ShieldCheck} 
+              titre="Sécurité" 
+              action={() => showToast('Paramètres de sécurité')} 
+            />
+            <RenduLigneOption 
+              icone={HelpCircle} 
+              titre="Aide" 
+              action={() => showToast('Centre d\'assistance')} 
+            />
+          </View>
+
+          <View style={styles.groupeOptions}>
+            <Text style={styles.titreGroupe}>À propos</Text>
+            <View style={styles.carteAPropos}>
+              <Text style={styles.texteAPropos}>
+                Spotify Clone est un projet pédagogique réalisé dans le cadre du
+                TP Mobile ICTL2. Il utilise React Native, Firebase et une
+                architecture moderne pour simuler une expérience de streaming
+                musicale complète.
+              </Text>
+              <Text style={styles.devTag}>Développé avec ❤️ par Groupe 4</Text>
+            </View>
+            <RenduLigneOption 
+              icone={ShieldCheck} 
+              titre="Conditions d'utilisation" 
+              action={() => showToast('Mentions légales')} 
+            />
+            <RenduLigneOption 
+              icone={Sliders} 
+              titre="Paramètres de confidentialité" 
+              action={() => showToast('Données personnelles')} 
+            />
           </View>
 
           <View style={styles.sectionActions}>
@@ -323,24 +374,39 @@ const styles = StyleSheet.create({
   conteneurPrincipal: {flex: 1, backgroundColor: COLORS.black},
   zoneSafe: {flex: 1},
   degradeFond: {position: 'absolute', top: 0, left: 0, right: 0, bottom: 0},
+  entetePremium: {
+    paddingTop: SPACING.m,
+    paddingHorizontal: SPACING.m,
+    marginBottom: 0,
+  },
+  ligneUtilisateur: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  avatarCercleSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F57C00',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.m,
+  },
+  texteAvatarSmall: {color: COLORS.black, fontWeight: 'bold', fontSize: 14},
+  titrePagePremium: {fontSize: 22, fontWeight: 'bold', color: COLORS.white, flex: 1},
+  iconesAction: {flexDirection: 'row', alignItems: 'center'},
+  boutonIcone: {marginLeft: 20},
   zoneScroll: {padding: SPACING.l},
   sectionProfil: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: 0,
+    marginBottom: 30,
+    paddingHorizontal: SPACING.s,
   },
-  avatarCercle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: COLORS.green,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lettreAvatar: {fontSize: 30, fontWeight: 'bold', color: COLORS.black},
-  infosUtilisateur: {marginLeft: SPACING.m},
-  nomUtilisateur: {color: COLORS.white, fontSize: 22, fontWeight: 'bold'},
+  infosUtilisateur: {marginLeft: 0},
+  nomUtilisateur: {color: COLORS.white, fontSize: 24, fontWeight: 'bold'},
   badgeAdmin: {
     color: COLORS.green,
     fontSize: 12,
@@ -468,6 +534,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 5,
+  },
+  carteAPropos: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  texteAPropos: {
+    color: COLORS.lightGray,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  devTag: {
+    color: COLORS.green,
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginTop: 12,
+    textAlign: 'right',
   },
 });
 

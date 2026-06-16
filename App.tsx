@@ -7,6 +7,7 @@ import {COLORS} from './src/theme/colors';
 import {initialiserLeLecteurAudio} from './src/services/ServiceLecteurAudio';
 import {initialiserDonneesDeTest} from './src/services/firestore';
 import {AuthProvider} from './src/context/AuthContext';
+import {ToastProvider} from './src/context/ToastContext';
 
 const App = () => {
   useEffect(() => {
@@ -22,10 +23,12 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
-        <AppNavigator />
-      </NavigationContainer>
+      <ToastProvider>
+        <NavigationContainer>
+          <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
+          <AppNavigator />
+        </NavigationContainer>
+      </ToastProvider>
     </AuthProvider>
   );
 };

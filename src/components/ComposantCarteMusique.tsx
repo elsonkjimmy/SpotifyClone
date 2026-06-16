@@ -10,20 +10,19 @@ import {
   Image,
   TouchableOpacity,
   Animated,
+  View,
 } from 'react-native';
 import {COLORS, SPACING} from '../theme/colors';
+import BoutonLike from './BoutonLike';
+import {Chanson} from '../types';
 
 interface ProprietesDeLaCarte {
-  titre: string;
-  artiste: string;
-  urlImage: string;
+  musique: Chanson;
   actionAuClic: () => void;
 }
 
 const ComposantCarteMusique = ({
-  titre,
-  artiste,
-  urlImage,
+  musique,
   actionAuClic,
 }: ProprietesDeLaCarte) => {
   // Réf pour l'échelle d'animation du clic
@@ -54,12 +53,17 @@ const ComposantCarteMusique = ({
         style={styles.conteneurDeLaCarte}
         onPress={gererAppui}
         activeOpacity={0.85}>
-        <Image source={{uri: urlImage}} style={styles.imageDeCouverture} />
+        <View style={styles.conteneurImage}>
+          <Image source={{uri: musique.artwork}} style={styles.imageDeCouverture} />
+          <View style={styles.conteneurLike}>
+            <BoutonLike chanson={musique} taille={20} />
+          </View>
+        </View>
         <Text style={styles.texteTitre} numberOfLines={1}>
-          {titre}
+          {musique.title}
         </Text>
         <Text style={styles.texteArtiste} numberOfLines={1}>
-          {artiste}
+          {musique.artist}
         </Text>
       </TouchableOpacity>
     </Animated.View>
@@ -71,23 +75,33 @@ const styles = StyleSheet.create({
     width: 154,
     marginRight: SPACING.m,
     marginBottom: SPACING.m,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)', // Aspect verre givré translucide
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)', // Bordure effet verre
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 14,
     padding: SPACING.s + 2,
-    // Ombre délicate
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 6},
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
+  conteneurImage: {
+    position: 'relative',
+  },
   imageDeCouverture: {
     width: '100%',
     height: 134,
     borderRadius: 10,
     backgroundColor: COLORS.cardBackground,
+  },
+  conteneurLike: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    padding: 6,
+    borderRadius: 20,
   },
   texteTitre: {
     color: COLORS.white,

@@ -12,7 +12,20 @@
           "package_name": "com.garderobe"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "394646013784-9dbuto3ban9ljhhvpjes0omi2r31ig4g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.garderobe",
+            "certificate_hash": "1ea1287ac39e894b872a907ed84fd922c874f9dd"
+          }
+        },
+        {
+          "client_id": "394646013784-ppo0td26fqd8si8be7holch16dlsvglq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDkjnsmE5cRCmhzJWr-eFx7i5M7-faKPuM"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "394646013784-ppo0td26fqd8si8be7holch16dlsvglq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "394646013784-4nrsokedi7rsg6au1pp7qj0d79pl0231.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.spotifyclone"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +56,12 @@
           "package_name": "com.spotifyclone"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "394646013784-ppo0td26fqd8si8be7holch16dlsvglq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDkjnsmE5cRCmhzJWr-eFx7i5M7-faKPuM"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "394646013784-ppo0td26fqd8si8be7holch16dlsvglq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "394646013784-4nrsokedi7rsg6au1pp7qj0d79pl0231.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.spotifyclone"
+              }
+            }
+          ]
         }
       }
     }

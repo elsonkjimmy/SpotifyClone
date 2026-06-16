@@ -13,12 +13,18 @@ import {
   TouchableOpacity,
   Image,
   Animated,
+  Alert,
 } from 'react-native';
+import {Bell, Clock, Settings} from 'lucide-react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {COLORS, SPACING} from '../theme/colors';
 import SectionHeader from '../components/SectionHeader';
 import ComposantCarteMusique from '../components/ComposantCarteMusique';
+import Skeleton from '../components/Skeleton';
+import {useAuth} from '../context/AuthContext';
+import {useToast} from '../context/ToastContext';
+import OfflineBanner from '../components/OfflineBanner';
 import {chargerEtJouerUneListeDeMusiques} from '../services/ServiceLecteurAudio';
 import {recupererToutesLesChansons} from '../services/firestore';
 import {recupererHistorique} from '../services/ServiceHistorique';
@@ -75,6 +81,8 @@ const CarteRaccourciAnimee = ({
 };
 
 const EcranAccueil = ({navigation}: any) => {
+  const {utilisateur} = useAuth();
+  const {showToast} = useToast();
   const [listeDesMusiques, setListeDesMusiques] = useState<Chanson[]>([]);
   const [estEnTrainDeCharger, setEstEnTrainDeCharger] = useState(true);
   const [filtreActif, setFiltreActif] = useState<
@@ -83,6 +91,13 @@ const EcranAccueil = ({navigation}: any) => {
   // Historique d'écoute : liste des chansons récemment jouées
   const [historiqueEcoute, setHistoriqueEcoute] = useState<Chanson[]>([]);
   const animationPulsation = useState(new Animated.Value(0.3))[0];
+
+  const obtenirSalutation = () => {
+    const heure = new Date().getHours();
+    if (heure < 12) return 'Bonjour';
+    if (heure < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+  };
 
   const chargerLesDonneesDepuisFirebase = useCallback(async () => {
     setEstEnTrainDeCharger(true);
@@ -123,18 +138,21 @@ const EcranAccueil = ({navigation}: any) => {
     }
   }, [estEnTrainDeCharger, animationPulsation]);
 
-  let musiquesFiltrees =
-    filtreActif === 'Podcasts'
-      ? []
-      : listeDesMusiques.filter(m =>
-          filtreActif === 'Musique' ? m.genre !== 'Podcast' : true,
-        );
+  let musiquesFiltrees = listeDesMusiques.filter(m => {
+    if (filtreActif === 'Musique') return m.genre !== 'Podcast';
+    if (filtreActif === 'Podcasts') return m.genre === 'Podcast';
+    return true;
+  });
 
   if (obtenirModeHorsLigne()) {
     musiquesFiltrees = musiquesFiltrees.filter(m =>
       estChansonTelechargee(m.id),
     );
   }
+
+  // Fallback : si après filtrage c'est vide mais qu'on a des musiques au total, 
+  // on affiche tout pour éviter un écran vide frustrant pour l'utilisateur
+  const afficherMessageVide = musiquesFiltrees.length === 0 && !estEnTrainDeCharger;
 
   const gererLectureMusique = async (musiqueSelectionnee: Chanson) => {
     const baseList = obtenirModeHorsLigne()
@@ -148,31 +166,16 @@ const EcranAccueil = ({navigation}: any) => {
   };
 
   const renderSqueletteChargement = () => (
-    <SafeAreaView style={styles.conteneurPrincipal}>
-      <ScrollView>
-        <View style={styles.enteteSquelette}>
-          <View style={styles.ligneFiltresSquelette}>
-            {[1, 2, 3].map(i => (
-              <Animated.View
-                key={i}
-                style={[styles.piluleSquelette, {opacity: animationPulsation}]}
-              />
-            ))}
-          </View>
-        </View>
-        <View style={styles.grilleSquelette}>
-          {[1, 2, 3, 4].map(i => (
-            <Animated.View
-              key={i}
-              style={[
-                styles.carteRaccourciSquelette,
-                {opacity: animationPulsation},
-              ]}
-            />
-          ))}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={styles.conteneurPrincipal}>
+      <View style={styles.entetePremium}>
+        <Skeleton width={200} height={30} />
+      </View>
+      <View style={styles.grilleSquelette}>
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <Skeleton key={i} width="47%" height={56} style={{margin: '1.5%'}} />
+        ))}
+      </View>
+    </View>
   );
 
   if (estEnTrainDeCharger) {
@@ -203,31 +206,87 @@ const EcranAccueil = ({navigation}: any) => {
         style={styles.degradeFond}
       />
       <SafeAreaView style={styles.zoneSafe}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.sectionEnTete}>
-            <View style={styles.ligneFiltres}>
-              {(['Tout', 'Musique', 'Podcasts'] as const).map(filtre => (
-                <TouchableOpacity
-                  key={filtre}
-                  style={
-                    filtreActif === filtre ? styles.piluleActive : styles.pilule
-                  }
-                  onPress={() => setFiltreActif(filtre)}>
-                  <Text
-                    style={
-                      filtreActif === filtre
-                        ? styles.textePiluleActive
-                        : styles.textePilule
-                    }>
-                    {filtre}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+        <OfflineBanner />
+        <View style={styles.entetePremium}>
+          <View style={styles.ligneUtilisateur}>
+            <View style={styles.avatarCercleSmall}>
+              <Text style={styles.texteAvatarSmall}>
+                {utilisateur?.email?.charAt(0).toUpperCase() || 'G'}
+              </Text>
+            </View>
+            <Text style={styles.titrePagePremium}>{obtenirSalutation()}</Text>
+            
+            <View style={styles.iconesAction}>
+              <TouchableOpacity
+                style={styles.boutonIcone}
+                onPress={() =>
+                  showToast('Aucune nouvelle notification')
+                }>
+                <Bell color={COLORS.white} size={22} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.boutonIcone}
+                onPress={() => navigation.navigate('Account')}>
+                <Clock color={COLORS.white} size={22} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.boutonIcone}
+                onPress={() => navigation.navigate('Account')}>
+                <Settings color={COLORS.white} size={22} />
+              </TouchableOpacity>
             </View>
           </View>
+          
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.barreFiltres}>
+            {(['Tout', 'Musique', 'Podcasts'] as const).map(filtre => (
+              <TouchableOpacity
+                key={filtre}
+                style={[
+                  styles.piluleFiltre,
+                  filtreActif === filtre && styles.piluleFiltreActive,
+                ]}
+                onPress={() => setFiltreActif(filtre)}>
+                <Text
+                  style={[
+                    styles.texteFiltre,
+                    filtreActif === filtre && styles.texteFiltreActive,
+                  ]}>
+                  {filtre}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
-          {musiquesFiltrees.length === 0 ? (
-            <Text style={styles.texteVide}>Aucun contenu pour ce filtre.</Text>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {afficherMessageVide ? (
+            <View style={styles.conteneurVideAccueil}>
+              <Text style={styles.texteVide}>
+                {obtenirModeHorsLigne() 
+                  ? "Vous êtes actuellement en mode hors-ligne. Seuls vos titres téléchargés s'affichent ici." 
+                  : (filtreActif === 'Podcasts' 
+                    ? "Les podcasts arrivent bientôt sur votre application Spotify Clone !" 
+                    : "Aucune musique ne correspond à votre sélection.")
+                }
+              </Text>
+              <TouchableOpacity 
+                style={styles.boutonReinitialiser}
+                onPress={() => {
+                  if (obtenirModeHorsLigne()) {
+                    navigation.navigate('Account');
+                  } else {
+                    setFiltreActif('Tout');
+                  }
+                }}
+              >
+                <Text style={styles.texteBoutonReinitialiser}>
+                  {obtenirModeHorsLigne() ? "DÉSACTIVER LE MODE HORS-LIGNE" : "VOIR TOUT LE CATALOGUE"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           ) : (
             <>
               <View style={styles.sectionRaccourcis}>
@@ -255,9 +314,7 @@ const EcranAccueil = ({navigation}: any) => {
                 contentContainerStyle={styles.listeHorizontale}
                 renderItem={({item}) => (
                   <ComposantCarteMusique
-                    titre={item.title}
-                    artiste={item.artist}
-                    urlImage={item.artwork}
+                    musique={item}
                     actionAuClic={() => gererLectureMusique(item)}
                   />
                 )}
@@ -272,9 +329,22 @@ const EcranAccueil = ({navigation}: any) => {
                 contentContainerStyle={styles.listeHorizontale}
                 renderItem={({item}) => (
                   <ComposantCarteMusique
-                    titre={item.title}
-                    artiste={item.artist}
-                    urlImage={item.artwork}
+                    musique={item}
+                    actionAuClic={() => gererLectureMusique(item)}
+                  />
+                )}
+              />
+
+              <SectionHeader title="Mix personnalisés" />
+              <FlatList
+                data={[...musiquesFiltrees].sort(() => Math.random() - 0.5)}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={item => 'mix-' + item.id}
+                contentContainerStyle={styles.listeHorizontale}
+                renderItem={({item}) => (
+                  <ComposantCarteMusique
+                    musique={item}
                     actionAuClic={() => gererLectureMusique(item)}
                   />
                 )}
@@ -293,32 +363,48 @@ const styles = StyleSheet.create({
   zoneSafe: {flex: 1},
   conteneurCarteRaccourciAnim: {flex: 1},
   degradeFond: {position: 'absolute', top: 0, left: 0, right: 0, height: 300},
-  sectionEnTete: {
-    paddingHorizontal: SPACING.m,
+  entetePremium: {
     paddingTop: SPACING.m,
-    marginBottom: SPACING.l,
+    paddingHorizontal: SPACING.m,
+    marginBottom: 5,
   },
-  ligneFiltres: {flexDirection: 'row', alignItems: 'center', marginTop: 10},
-  piluleActive: {
-    backgroundColor: COLORS.green,
-    paddingHorizontal: 15,
+  ligneUtilisateur: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  avatarCercleSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F57C00',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.m,
+  },
+  texteAvatarSmall: {color: COLORS.black, fontWeight: 'bold', fontSize: 14},
+  titrePagePremium: {fontSize: 22, fontWeight: 'bold', color: COLORS.white, flex: 1},
+  iconesAction: {flexDirection: 'row', alignItems: 'center'},
+  boutonIcone: {marginLeft: 20},
+  barreFiltres: {flexDirection: 'row', marginBottom: 10},
+  piluleFiltre: {
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 10,
-  },
-  textePiluleActive: {color: COLORS.black, fontSize: 13, fontWeight: 'bold'},
-  pilule: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 10,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    marginRight: 8,
   },
-  textePilule: {color: COLORS.white, fontSize: 13, fontWeight: '600'},
+  piluleFiltreActive: {
+    backgroundColor: COLORS.green,
+    borderColor: COLORS.green,
+  },
+  texteFiltre: {color: COLORS.white, fontSize: 13, fontWeight: '500'},
+  texteFiltreActive: {color: COLORS.black, fontWeight: 'bold'},
   sectionRaccourcis: {
     paddingHorizontal: SPACING.m - 4,
+    marginTop: 10,
     marginBottom: SPACING.m,
   },
   carteRaccourci: {
@@ -347,30 +433,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   listeHorizontale: {paddingLeft: SPACING.m},
+  conteneurVideAccueil: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 100,
+    paddingHorizontal: 40,
+  },
   texteVide: {
     color: COLORS.lightGray,
     textAlign: 'center',
-    marginTop: 40,
     fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  boutonReinitialiser: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  texteBoutonReinitialiser: {
+    color: COLORS.black,
+    fontWeight: 'bold',
+    fontSize: 12,
+    letterSpacing: 1,
   },
   espaceBas: {height: 120},
-  enteteSquelette: {marginBottom: 30, padding: SPACING.m},
-  ligneFiltresSquelette: {flexDirection: 'row', marginTop: 20},
-  piluleSquelette: {
-    width: 80,
-    height: 35,
-    borderRadius: 20,
-    backgroundColor: '#333',
-    marginRight: 10,
-  },
-  grilleSquelette: {flexDirection: 'row', flexWrap: 'wrap', padding: SPACING.m},
-  carteRaccourciSquelette: {
-    width: '47%',
-    height: 56,
-    backgroundColor: '#222',
-    borderRadius: 4,
-    margin: '1.5%',
-  },
 });
 
 export default EcranAccueil;
