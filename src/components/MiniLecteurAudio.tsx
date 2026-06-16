@@ -94,7 +94,7 @@ const MiniLecteurAudio = () => {
 
   // ── Effet : animation de glissement à la première apparition ──
   useEffect(() => {
-    if (morceauActuel && dernierIdMorceau.current === null) {
+    if (morceauActuel) {
       // Premier morceau chargé → on fait glisser le mini lecteur vers le haut
       Animated.timing(translationVerticale, {
         toValue: 0,
@@ -196,10 +196,10 @@ const MiniLecteurAudio = () => {
 const styles = StyleSheet.create({
   conteneurMiniLecteur: {
     position: 'absolute',
-    bottom: 55, // Juste au-dessus de la barre d'onglets, légèrement surélevé pour un effet flottant
+    bottom: 65, // Remonté pour éviter d'être caché
     left: 12,
     right: 12,
-    backgroundColor: 'rgba(35, 35, 35, 0.72)', // Verre translucide sombre
+    backgroundColor: 'rgba(35, 35, 35, 0.9)', // Plus opaque pour la visibilité
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)', // Bordure effet verre givré
     height: 62,

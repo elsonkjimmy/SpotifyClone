@@ -459,6 +459,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   espaceBas: {height: 120},
+  grilleSquelette: {flexDirection: 'row', flexWrap: 'wrap', padding: SPACING.m},
 });
 
 export default EcranAccueil;
