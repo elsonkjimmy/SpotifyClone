@@ -5,7 +5,7 @@ import auth from '@react-native-firebase/auth';
 let GoogleSignin: any = null;
 let authorize: any = null;
 
-const GOOGLE_WEB_CLIENT_ID = '394646013784-ppo0td26fqd8si8be7holch16dlsvglq.apps.googleusercontent.com';
+const GOOGLE_WEB_CLIENT_ID = '394646013784-7dpppcaqdnmhhsmsngildjuq24atbj6f.apps.googleusercontent.com';
 const GITHUB_CLIENT_ID = 'Ov23liOOpFaYkxadNnTH';
 const GITHUB_CLIENT_SECRET = 'd7767daba12419dace39608ed1221c151c593344';
 
@@ -33,10 +33,10 @@ try {
 
   if (GoogleSignin) {
     GoogleSignin.configure({
-      // ID client Web Firebase (généré automatiquement lors de l'activation de Google Auth)
+      // ID client Web Firebase spécifique au nouveau package com.groupe4.spotifyclone
       webClientId: GOOGLE_WEB_CLIENT_ID,
-      offlineAccess: true, // Requis pour obtenir l'idToken de manière fiable
-      forceCodeForRefreshToken: true,
+      offlineAccess: false, 
+      scopes: ['profile', 'email'],
     });
   }
 } catch (erreur) {
