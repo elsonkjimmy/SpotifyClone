@@ -58,14 +58,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "394646013784-00oq9876glfdhhj80ks8is3nfhp9sk40.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.groupe4.spotifyclone",
-            "certificate_hash": "1ea1287ac39e894b872a907ed84fd922c874f9dd"
-          }
-        },
-        {
           "client_id": "394646013784-7dpppcaqdnmhhsmsngildjuq24atbj6f.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
