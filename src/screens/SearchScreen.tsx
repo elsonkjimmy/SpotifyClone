@@ -3,7 +3,7 @@
  * Permet à l'utilisateur de trouver des musiques par titre ou artiste.
  * Style : Glassmorphism premium avec fond en dégradé profond.
  */
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useState, useEffect} from 'react';
 import {
   View,
   Text,
